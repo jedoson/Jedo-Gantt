@@ -14,6 +14,22 @@
     GNU General Public License for more details.
 
 */
+/**
+ * @author jedoson
+ */
+/*  Copyright 2010  이상주  (email : jedoson@naver.com)
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+*/
 
 window.jedo = window.jedo || {};
 window.jedo.YEAR = 1;    // Year
@@ -116,6 +132,24 @@ window.jedo.getFnScale = function(oSDate, oEDate, nSpx, nEpx) {
 //		}
 	};
 };
+window.jedo.getSVGCursorPoint = function(svg, event) {
+	var pt = svg.node().createSVGPoint();
+	pt.x = event.clientX; 
+	pt.y = event.clientY;
+    var a = svg.node().getScreenCTM();
+    //console.debug("offset based on svg"+ " x:" + a.e +" y:" + a.f);
+    var b = a.inverse();
+    return pt.matrixTransform(b);
+};
+window.jedo.getParentMarkPoints = function(iX, iY, iW, iH) {
+	var mH = (iH/5)*3;
+	return [ { "x": iX-10,  "y": iY},  
+             { "x": iX+10,  "y": iY},
+             { "x": iX+10,  "y": iY+mH}, 
+             { "x": iX,  	"y": iY+iH},
+             { "x": iX-10,  "y": iY+mH}
+           ];
+};
 window.jedo.JedoGantt = function () {
 	
 	
@@ -151,23 +185,7 @@ window.jedo.JedoGantt = function () {
 	this.getSVGGanttHeader = function() {
 		return oSVGGanttHeader;
 	};
-	
-	var oSVGGanttHeaderBG = null;
-	this.setSVGGanttHeaderBG = function(svgHeaderBG) {
-		oSVGGanttHeaderBG = svgHeaderBG;
-	};
-	this.getSVGGanttHeaderBG = function() {
-		return oSVGGanttHeaderBG;
-	};
-	
-	var oSVGGanttBodyBG = null;
-	this.setSVGGanttBodyBG = function(svgBodyBG) {
-		oSVGGanttBodyBG = svgBodyBG;
-	};
-	this.getSVGGanttBodyBG = function() {
-		return oSVGGanttBodyBG;
-	};
-	
+		
 	var ganttTableId = "";
 	this.setGanttTableId = function(sGanttTableId) {
 		ganttTableId = sGanttTableId;
@@ -194,14 +212,6 @@ window.jedo.JedoGantt = function () {
 	};
 	
 	
-	var iHeadLineCount = 0;
-	this.setHeadLineCount = function(pHeadLineCount) {
-		iHeadLineCount = pHeadLineCount;
-	};
-	this.getHeadLineCount = function() {
-		return iHeadLineCount;
-	};
-	
 	var aSVGHeaderLine = [];
 	this.addSVGHeaderLine = function(gLine) {
 		aSVGHeaderLine.push(gLine);
@@ -209,22 +219,7 @@ window.jedo.JedoGantt = function () {
 	this.getSVGHeaderLine = function(idx) {
 		return aSVGHeaderLine[idx];
 	};
-	
-	var aSVGBodyLine = null;
-	this.setSVGBodyLine = function(a) {
-		aSVGBodyLine = a;
-	};
-	this.getSVGBodyLine = function() {
-		return aSVGBodyLine;
-	};
-	
-	var aSVGGanttBar = null;
-	this.setSVGGanttBar = function(a) {
-		aSVGGanttBar = a;
-	};
-	this.getSVGGanttBar = function() {
-		return aSVGGanttBar;
-	};
+
 	
 	
 	var ganttDate = {};
@@ -263,6 +258,20 @@ window.jedo.JedoGantt = function () {
 	this.getCapturedGanttBar = function() {
 		return oCapturedGanttBar;
 	};
+};
+window.jedo.JedoGantt.prototype.isInChildGantt = function(id) {
+	var o = null;
+	var i = 0;
+	var options = this.getOptions();
+	var ganttData = options.ganttData;
+	var nLength = ganttData.length;
+	for(i=0; i<nLength; i++) {
+		o = ganttData[i];
+		if(o.parentId == id) {
+			return true;
+		}
+	}
+	return false;
 };
 window.jedo.JedoGantt.prototype.initHeaderDateViewMode = function() {
 	console.log("s -- window.jedo.JedoGantt.prototype.initHeaderDateViewMode -- ");
@@ -466,28 +475,49 @@ window.jedo.JedoGantt.prototype.createGanttHeader = function(oGanttContainer) {
     var iHeadLine = 0;
     var options = this.getOptions();
     
+
+    
+    
 	this.setGanttHeaderId(oGanttContainer.attr("id")+"_ganttHeader");
-	this.setHeadLineCount(options.header.viewLineCount);
 	
 	var svg = this.getSVG();
 	var nSvgWidth = svg.attr("width");
-	var nSvgHeaderHeight = options.lineHeight*options.header.viewLineCount;
-	var rect = svg.selectAll('rect.ganttHeaderBg')
-					.data([0])
-					.enter()
-					.append('rect')
-					.attr('class', 'ganttHeaderBg')
-					.attr('x', 1)
-					.attr('y', 1)
-					.attr('width', nSvgWidth)
-					.attr('height', nSvgHeaderHeight)
-					.style({
-						'fill': 'black',
-					    'stroke': 'navy',
-					    'stroke-width': 0
-					});
+	var nSvgHeaderHeight = options.header.lineHeight*options.header.viewLineCount;
+	
+    var gradient = svg.append("defs")
+				    .append("linearGradient")
+				      .attr("id", "headerGradient")
+				      .attr("x1", "0%")
+				      .attr("y1", "0%")
+				      .attr("x2", "0%")
+				      .attr("y2", "100%")
+				      .attr("spreadMethod", "pad");
 
-	this.setSVGGanttHeaderBG(rect);
+  gradient.append("stop")
+      .attr("offset", "0%")
+      .attr("stop-color", "#F5F5F5")
+      .attr("stop-opacity", 1);
+
+  gradient.append("stop")
+      .attr("offset", "100%")
+      .attr("stop-color", "#DCDCDC")
+      .attr("stop-opacity", 1);
+	
+  
+  var ganttHeader = svg.append('g').attr('class', 'ganttHeader');
+  
+	
+	ganttHeader.append('rect')
+				.attr('class', 'ganttHeaderBg')
+				.attr('x', 1)
+				.attr('y', 1)
+				.attr('width', nSvgWidth)
+				.attr('height', nSvgHeaderHeight)
+				.style({
+					'fill': 'black',
+				    'stroke': 'navy',
+				    'stroke-width': 0
+				});
 	
 	var sLineId = "";
 	var headerViewLineCount = 0;
@@ -537,8 +567,7 @@ window.jedo.JedoGantt.prototype.createGanttBody = function(oGanttContainer) {
 	var options = this.getOptions();
 	var nSvgWidth = svg.attr('width');
 	var nSvgHeight = svg.attr('height');
-	var nSvgHeaderHeight = options.lineHeight*this.getHeadLineCount();
-	//console.debug("nSvgHeaderHeight:"+nSvgHeaderHeight);
+	var nSvgHeaderHeight = options.header.lineHeight*options.header.viewLineCount;
 	var nSvgBodyHeight = options.lineHeight*options.ganttData.length;
 	
 	var rect = svg.selectAll('rect.ganttBodyBg')
@@ -555,7 +584,6 @@ window.jedo.JedoGantt.prototype.createGanttBody = function(oGanttContainer) {
 		    'stroke': 'navy',
 		    'stroke-width': 0
 		});
-	this.setSVGGanttBodyBG(rect);
 	this.setBodyGanttBar();
 	
 	console.log("e -- window.jedo.JedoGantt.prototype.createGanttBody -- ");
@@ -566,7 +594,8 @@ window.jedo.JedoGantt.prototype.setBodyGanttBar = function() {
 	var svg = this.getSVG();
 	var options = this.getOptions();
 	var nSvgWidth = svg.attr('width');
-	var nSvgHeaderHeight = options.lineHeight*this.getHeadLineCount();
+	var iHeadLineCount = options.header.viewLineCount;
+	var nSvgHeaderHeight = options.header.lineHeight*iHeadLineCount;
 	
 	
 	var nSvgHeight = nSvgHeaderHeight + (options.ganttData.length * options.lineHeight);
@@ -575,14 +604,18 @@ window.jedo.JedoGantt.prototype.setBodyGanttBar = function() {
 	var fnScale = this.getFnScale();
 	var fnPrevScale = this.getFnPrevScale();
 	
-	var iHeadLineCount = this.getHeadLineCount();
-	//console.debug("iHeadLineCount:"+iHeadLineCount);
-	
+	var iSPos = 0;
+	var iToSPos = 0;
+	var iEPos = 0;
+	var iToEPos = 0;
 	var iLine = 0;
+	var iWidth = 0;
+	var iToWidth = 0;
 	var oJedoGantt = this;
-	svg.node().addEventListener("mousemove",oJedoGantt.mouseMoveBar.bind(oJedoGantt),false);
-	svg.node().addEventListener("mouseup",oJedoGantt.mouseUpBar.bind(oJedoGantt),false);
-
+	var iGanttBarHeight = options.lineHeight-(options.body.barSpace*2);
+	
+	
+	
 	var arr = [];
 	$(options.ganttData).each(function(index){
 		//console.log("ganttData.index:"+index);
@@ -594,20 +627,39 @@ window.jedo.JedoGantt.prototype.setBodyGanttBar = function() {
 		iLine = options.unitSpace + (index * options.lineHeight);
 		
 		sDate.setHours(0,0,0,0);
-		var iSPos = fnScale(sDate, window.jedo.DATE_SCALE_TYPE_START);
+		if(fnPrevScale) {
+			iSPos = fnPrevScale(sDate, window.jedo.DATE_SCALE_TYPE_START);
+			iToSPos = fnScale(sDate, window.jedo.DATE_SCALE_TYPE_START);
+		} else {
+			iSPos = fnScale(sDate, window.jedo.DATE_SCALE_TYPE_START);
+		}
 		
 		eDate.setHours(23,59,59,999);
-		var iEPos = fnScale(eDate, window.jedo.DATE_SCALE_TYPE_END);
-		
-		var iWidth = iEPos - iSPos;
+		if(fnPrevScale) {
+			iEPos = fnPrevScale(eDate, window.jedo.DATE_SCALE_TYPE_END);
+			iToEPos = fnScale(eDate, window.jedo.DATE_SCALE_TYPE_END);
+		} else {
+			iEPos = fnScale(eDate, window.jedo.DATE_SCALE_TYPE_END);
+		}
 
+		if(fnPrevScale) {
+			iWidth = iEPos - iSPos;
+			iToWidth = iToEPos - iToSPos;
+		} else {
+			iWidth = iEPos - iSPos;
+		}
+		
 		arr[arr.length] = {
-			x : iSPos,
-			lineY : nSvgHeaderHeight+(options.lineHeight*index),
-			y : nSvgHeaderHeight+((options.lineHeight*index)+options.body.barSpace),
-			width : iWidth,
+			id : sID,
+			x1 : iSPos,
+			y1 : nSvgHeaderHeight+((options.lineHeight*index)+options.body.barSpace),
+			w1 : iWidth,
+			h1 : iGanttBarHeight,
+			x2 : iToSPos,
+			w2 : iToWidth,
 			lineHeight : options.lineHeight,
-			height : options.lineHeight-(options.body.barSpace*2),
+			lineY : nSvgHeaderHeight+(options.lineHeight*index),
+			isParent : oJedoGantt.isInChildGantt(sID),
 			style : {
 				fill: '#0000cd', 
 				stroke: '#ff69b4', 
@@ -616,136 +668,175 @@ window.jedo.JedoGantt.prototype.setBodyGanttBar = function() {
 		}
 	});
 	
-	var svgBodyLIne = this.getSVGBodyLine();
-	if(svgBodyLIne) {
-		svgBodyLIne.remove();
-	}
-	//svg.selectAll('rect.ganttBodyLine'+indexLine).remove();
-	//svg.selectAll('text.ganttBodyBar'+indexLine).remove();
-	
+
+
 	var iX = fnScale(options.endGanttDate, window.jedo.DATE_SCALE_TYPE_END);
-	svgBodyLIne = svg.selectAll('rect.ganttBodyLine')
-		.data(arr)
-		.enter()
-		.append('rect')
-		.attr('class', 'ganttBodyLine')
-		.attr('x', 0)
-		.attr('y', function(d){ return d.lineY; })
-		.attr('width', iX)
-		.attr('height', function(d){ return d.lineHeight; })
-		.style('fill', function(d, i){ return i%2 ? '#FFFFF0' : '#F0FFF0'; });
-	this.setSVGBodyLine(svgBodyLIne);
-	
-	var aGanttBodyBar = this.getSVGGanttBar();
-	if(aGanttBodyBar) {
-		aGanttBodyBar.remove();
+	if(fnPrevScale) {
+		svg.selectAll('rect.ganttBodyLine').attr('width', iX);
+	} else {
+		svg.selectAll('rect.ganttBodyLine')
+			.data(arr)
+			.enter()
+			.append('rect')
+			.attr('class', 'ganttBodyLine')
+			.attr('x', 0)
+			.attr('y', function(d){ return d.lineY; })
+			.attr('width', iX)
+			.attr('height', function(d){ return d.lineHeight; })
+			.style('fill', function(d, i){ return i%2 ? '#FFFFF0' : '#F0FFF0'; });
 	}
-	aGanttBodyBar = svg.selectAll('g.ganttBar')
+
+	
+	if(fnPrevScale) {
+		arr.forEach(function(o,i){
+			svg.selectAll("#rectGanttBar_"+o.id+", #startMarkGanttBar_"+o.id+", #endMarkGanttBar_"+o.id)
+				.transition().duration(1000)
+				.attr('x',function(d){
+					if(d3.select(this).attr("id") == "rectGanttBar_"+o.id) {
+						return o.x2;
+					} else {
+						return null;
+					}})
+				.attr('width',function(d){
+					if(d3.select(this).attr("id") == "rectGanttBar_"+o.id) {
+						return o.w2;
+					} else {
+						return null;
+					}})
+				.attr('points',function(d){
+					var oThis = d3.select(this);
+					if(oThis.attr("id") == "startMarkGanttBar_"+o.id) {
+						
+						var polyData = window.jedo.getParentMarkPoints(o.x2, o.y1, o.w2, o.h1);
+						return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" "); 
+					} else if(oThis.attr("id") == "endMarkGanttBar_"+o.id) {
+						
+						var polyData = window.jedo.getParentMarkPoints(o.x2+o.w2, o.y1, o.w2, o.h1);
+						return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" "); 
+					} 
+					return null;
+				});
+		});
+		
+	} else {
+		var aGanttBodyBar = svg.selectAll('g.ganttBar')
 							.data(arr)
 							.enter()
-							.append('g');
-	aGanttBodyBar.append("rect").attr('class', 'ganttBodyBar')
-							.attr('x', function(d){ return d.x; })
-							.attr('y', function(d){ return d.y; })
-							.attr('width', function(d){ return d.width; })
-							.attr('height', function(d){ return d.height; })
-							.style({
-								fill: '#0000cd', 
-								stroke: '#ff69b4', 
+							.append('g')
+							.attr('class', 'ganttBar')
+							.attr('id', function(d){ return "gGanttBar_"+d.id});
+		
+		aGanttBodyBar.append("rect").attr('class', 'ganttBodyBar')
+							.attr('id', function(d){ return "rectGanttBar_"+d.id})
+							.attr('x', function(d){ return d.x1; })
+							.attr('y', function(d){ return d.y1; })
+							.attr('width', function(d){ return d.w1; })
+							.attr('height', function(d){ 
+								if(d.isParent) {
+									return (d.h1/3)*2;
+								} else {
+									return d.h1;
+								}
+							}).style({
+								'fill': '#0000cd', 
+								'stroke': '#ff69b4', 
 								'stroke-width': 0
 							});
+
+		aGanttBodyBar.each(function(d,i){
+			console.log("d.id:"+d.id+" d.isParent:"+d.isParent);
+			if(d.isParent) {
+				// start Group Mark.
+				var polyData = window.jedo.getParentMarkPoints(d.x1, d.y1, d.w1, d.h1);
+				svg.select("#gGanttBar_"+d.id).append("polygon")
+						.attr("id", "startMarkGanttBar_"+d.id)
+						.attr("class", "startMarkGanttBar")
+				    	.attr("points",function(d) { 
+				    		return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" "); 
+				    	})
+						.attr("stroke", "red")
+						.attr("stroke-width", 1)
+						.attr("fill", "yellow");
+				
+				// end group Mark.
+				polyData = window.jedo.getParentMarkPoints(d.x1+d.w1, d.y1, d.w1, d.h1);
+				svg.select("#gGanttBar_"+d.id).append("polygon")
+						.attr("id", "endMarkGanttBar_"+d.id)
+						.attr("class", "endMarkGanttBar")
+				    	.attr("points",function(d) { 
+				    		return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" "); 
+				    	})
+						.attr("stroke", "red")
+						.attr("stroke-width", 1)
+						.attr("fill", "yellow");
+			}
+		});
+
+		aGanttBodyBar.selectAll(".ganttBodyBar").each(function(){
+			this.addEventListener("mouseover", oJedoGantt.mouseOverBar.bind(oJedoGantt), false);
+			this.addEventListener("mouseout",  oJedoGantt.mouseOutBar.bind(oJedoGantt),  false);
+			this.addEventListener("mousedown", oJedoGantt.mouseDownBar.bind(oJedoGantt), false);
+		});
+	}
 	
-	aGanttBodyBar.selectAll(".ganttBodyBar").each(function(){
-		this.addEventListener("mouseover",oJedoGantt.mouseOverBar.bind(oJedoGantt),false);
-		this.addEventListener("mouseout",oJedoGantt.mouseOutBar.bind(oJedoGantt),false);
-		$(this).on("mousedown", { oJedoGantt:oJedoGantt }, oJedoGantt.mouseDownBar);
-	});
-	this.setSVGGanttBar(aGanttBodyBar);
+	
 	console.log("e -- window.jedo.JedoGantt.prototype.setBodyGanttBar  --");
 };
 window.jedo.JedoGantt.prototype.mouseOverBar = function(event) {
-	
 	console.log("s -- window.jedo.JedoGantt.prototype.mouseOverBar  --");
 
 	console.log("e -- window.jedo.JedoGantt.prototype.mouseOverBar  --");
 };
 window.jedo.JedoGantt.prototype.mouseOutBar = function(event) {
-	
 	console.log("s -- window.jedo.JedoGantt.prototype.mouseOutBar  --");
 
 	console.log("e -- window.jedo.JedoGantt.prototype.mouseOutBar  --");
 };
 window.jedo.JedoGantt.prototype.mouseDownBar = function(event) {
-	
 	console.log("s -- window.jedo.JedoGantt.prototype.mouseDownBar  --");
+	console.log("event.type:"+event.type+" clientX:"+event.clientX+" clientY:"+event.clientY+" y:"+event.y);
 	
-	var oCapturedGanttBar = event.data.oJedoGantt.getCapturedGanttBar();
+	var svg = this.getSVG();
+	var oCapturedGanttBar = this.getCapturedGanttBar();
 	if(oCapturedGanttBar) {
-		$(oCapturedGanttBar).attr('stroke-width',0);
+		d3.select(oCapturedGanttBar).style({'stroke-width':0});
 	}
-	var id = this.getAttribute("id");
-	//console.debug("this.id:"+id);
-	event.data.oJedoGantt.setCapturedGanttBar(this);
-	
-	$(this).animate({
-						'stroke-width':2
-					},100);
-	
+	var id = d3.select(event.target).attr("id");
+	console.debug("event.target.getAttribute('id'):"+id);
+	this.setCapturedGanttBar(event.target);
+	d3.select(event.target).style({'stroke-width':2});
 	
 	console.log("e -- window.jedo.JedoGantt.prototype.mouseDownBar  --");
 };
 window.jedo.JedoGantt.prototype.mouseUpBar = function(event) {
-	
 	console.log("s -- window.jedo.JedoGantt.prototype.mouseUpBar  --");
-
 	var oCapturedGanttBar = this.getCapturedGanttBar();
 	if(oCapturedGanttBar) {
-		$(oCapturedGanttBar).animate({
-			svgStrokeWidth:0
-		},100);
+		d3.select(oCapturedGanttBar).style({'stroke-width':0});
 		this.setCapturedGanttBar(null);
 	}
 	console.log("e -- window.jedo.JedoGantt.prototype.mouseUpBar  --");
 };
-window.jedo.JedoGantt.prototype.getSVGCursorPoint = function(event) {
-	console.log("s -- window.jedo.JedoGantt.prototype.getSVGCursorPoint  --");
-	var svg = this.getSVG();
-	try {
-		var pt = svg.node().createSVGPoint();
-		pt.x = event.clientX; 
-		pt.y = event.clientY;
-	    var a = svg.node().getScreenCTM();
-	    //console.debug("offset based on svg"+ " x:" + a.e +" y:" + a.f);
-	    var b = a.inverse();
-	    return pt.matrixTransform(b);
-	} finally {
-		console.log("e -- window.jedo.JedoGantt.prototype.getSVGCursorPoint  --");
-	}
-};
 window.jedo.JedoGantt.prototype.mouseMoveBar = function(event) {
-	
-	console.log("s -- window.jedo.JedoGantt.prototype.mouseMoveBar  --");
-	console.log("event.type:"+event.type+" clientX:"+event.clientX+" clientY:"+event.clientY+" y:"+event.y);
+	//console.log("s -- window.jedo.JedoGantt.prototype.mouseMoveBar  --");
+	//console.log("event.type:"+event.type+" clientX:"+event.clientX+" clientY:"+event.clientY+" y:"+event.y);
 
-    var svgPoint	= this.getSVGCursorPoint(event);
-    //console.debug("svg mouse at"+ " x:" + svgPoint.x +" y:" +svgPoint.y);
-    
     var oCapturedGanttBar = this.getCapturedGanttBar();
 	if(oCapturedGanttBar) {
-		
-		var options = this.getOptions();
 		var svg = this.getSVG();
+		var options = this.getOptions();
+		var svgPoint	= window.jedo.getSVGCursorPoint(svg, event);
+	    //console.debug("svg mouse at"+ " x:" + svgPoint.x +" y:" +svgPoint.y);
+	    
+		var o = d3.select(oCapturedGanttBar);
 		
-		var x = $(oCapturedGanttBar).attr("x");
-		var w = $(oCapturedGanttBar).attr("width");
+		var x = o.attr("x");
+		var w = o.attr("width");
 		var w1 = parseInt(event.clientX) - x;
 		w1 = w1 < options.unitSpace ? options.unitSpace : w1;
-		$(oCapturedGanttBar).attr("width", w1);
-//		$(oCapturedGanttBar).animate({
-//			svgWidth:w1
-//		},100);
+		o.attr("width", w1);
 	}
-	console.log("e -- window.jedo.JedoGantt.prototype.mouseMoveBar  --");
+	//console.log("e -- window.jedo.JedoGantt.prototype.mouseMoveBar  --");
 };
 window.jedo.JedoGantt.prototype.setHeaderLineMode = function(indexLine, lineMode) {
 	console.log("s -- window.jedo.JedoGantt.prototype.setHeaderLineMode  --");
@@ -811,7 +902,7 @@ window.jedo.JedoGantt.prototype.setHeaderLineMode = function(indexLine, lineMode
 	}
 
 	var arr = [];
-	var y = options.unitSpace+(options.lineHeight*indexLine);
+	var y = options.unitSpace+(options.header.lineHeight*indexLine);
 	
 	var nGanttEndTime = options.endGanttDate.getTime();
 	while(oDate.getTime() <= nGanttEndTime) {
@@ -918,7 +1009,7 @@ window.jedo.JedoGantt.prototype.setHeaderLineMode = function(indexLine, lineMode
     	}
 		
 		var bLastHeaderLine = indexLine+1 === options.header.viewLineCount;
-		var h = bLastHeaderLine ? options.lineHeight-(options.unitSpace*2) : options.lineHeight-options.unitSpace;
+		var h = bLastHeaderLine ? options.header.lineHeight-(options.unitSpace*2) : options.header.lineHeight-options.unitSpace;
 //		console.debug("iHeight:"+h);
 		//console.debug("y:"+y);
 		arr[arr.length] = {
@@ -981,7 +1072,7 @@ window.jedo.JedoGantt.prototype.setHeaderLineMode = function(indexLine, lineMode
 	svg.selectAll('text.textheaderLine'+indexLine).remove();
 	
 	if(fnPrevScale) {
-		var rect = svg.selectAll('rect.rectheaderLine'+indexLine)
+		var rect = svg.select("g.ganttHeader").selectAll('rect.rectheaderLine'+indexLine)
 			.data(arr)
 			.enter()
 			.append('rect')
@@ -991,7 +1082,7 @@ window.jedo.JedoGantt.prototype.setHeaderLineMode = function(indexLine, lineMode
 			.attr('width', function(d){ return d.width; })
 			.attr('height', function(d){ return d.height; })
 			.style({
-				'fill' : 'yellow', 
+				'fill' : 'url(#headerGradient)', 
 				'stroke' : 'navy', 
 				'stroke-width' : 0
 			}).transition().duration(1000)
@@ -1000,7 +1091,7 @@ window.jedo.JedoGantt.prototype.setHeaderLineMode = function(indexLine, lineMode
 		
 		var changeFormat = null;
 		var checkText = false;
-		var text = svg.selectAll('text.textheaderLine'+indexLine)
+		var text = svg.select("g.ganttHeader").selectAll('text.textheaderLine'+indexLine)
 			.data(arr)
 			.enter()
 			.append('text')
@@ -1031,7 +1122,7 @@ window.jedo.JedoGantt.prototype.setHeaderLineMode = function(indexLine, lineMode
 		
 		
 	} else {
-		svg.selectAll('rect.rectheaderLine'+indexLine)
+		svg.select("g.ganttHeader").selectAll('rect.rectheaderLine'+indexLine)
 			.data(arr)
 			.enter()
 			.append('rect')
@@ -1041,12 +1132,12 @@ window.jedo.JedoGantt.prototype.setHeaderLineMode = function(indexLine, lineMode
 			}).attr('width', function(d){ return d.width; 
 			}).attr('height', function(d){ return d.height; 
 			}).style({
-				fill : 'yellow', 
+				fill : 'url(#headerGradient)', 
 				stroke : 'navy', 
 				'stroke-width' : 0
 			});
 	
-		svg.selectAll('text.textheaderLine'+indexLine)
+		svg.select("g.ganttHeader").selectAll('text.textheaderLine'+indexLine)
 			.data(arr)
 			.enter()
 			.append('text')
@@ -1075,13 +1166,9 @@ window.jedo.JedoGantt.prototype.setHeaderLineMode = function(indexLine, lineMode
 		var oJedoGant = this;
 		svg.selectAll('rect.rectheaderLine'+indexLine+', text.textheaderLine'+indexLine)
 			.each(function(){
-				
-				
 				this.addEventListener("mouseup", oJedoGant.changeFnScale.bind(oJedoGant),false);
 			});
-		
 	}
-	
 	console.log("e -- window.jedo.JedoGantt.prototype.setHeaderLineMode  --");
 };
 window.jedo.JedoGantt.prototype.changeFnScale = function(event) {
@@ -1100,11 +1187,8 @@ window.jedo.JedoGantt.prototype.changeFnScale = function(event) {
 	var svg = this.getSVG();
 	var fnScale = this.getFnScale();
 	var nSvgWidth = svg.attr("width");
-	var svgGanttHeaderBG = this.getSVGGanttHeaderBG();
-	svgGanttHeaderBG.attr('width', nSvgWidth);
-	
-	var svgGanttBodyBG = this.getSVGGanttBodyBG();
-	svgGanttBodyBG.attr('width', nSvgWidth);
+	svg.select('rect.ganttHeaderBg').attr('width', nSvgWidth);
+	svg.select('rect.ganttBodyBg').attr('width', nSvgWidth);
 
 	var options = this.getOptions();
 	var i = 0;
@@ -1114,6 +1198,10 @@ window.jedo.JedoGantt.prototype.changeFnScale = function(event) {
     	this.setHeaderLineMode(i, nLineMode);
     }
     this.setBodyGanttBar();
+    
+    
+    
+    
 	console.log("e -- window.jedo.JedoGantt.prototype.changeFnScale  --");
 };
 (function($){
@@ -1128,10 +1216,10 @@ window.jedo.JedoGantt.prototype.changeFnScale = function(event) {
 		var defaults = {
 			
 			// 뷰모드 UnitDate, FitSize 
-			viewMode : "UnitDate",
+			viewMode : "FitSize",
 			
 			// 수정금지.
-			editMode : false,
+			editMode : true,
 			
 			
 			startGanttDate : startGanttDate,
@@ -1140,14 +1228,12 @@ window.jedo.JedoGantt.prototype.changeFnScale = function(event) {
 	        // 시작주요일 : 0(일요일), 1(월요일), 
 	        startWeekDay : 1,
 	        
-	        lineHeight : 30,
+	        lineHeight : 50,
 	        unitWidth : 100,
 	        unitSpace : 1,
 	        
-	        
-	        
 	        header : {
-	        	
+	        	lineHeight      : 30,
 	        	yearLine    	: true,
 	        	quarterLine 	: true,
 	        	monthLine   	: true,
@@ -1212,10 +1298,18 @@ window.jedo.JedoGantt.prototype.changeFnScale = function(event) {
 		var fnScale = window.jedo.getFnScale(options.startGanttDate, options.endGanttDate, 0, nWidth);
 		oJedoGantt.setFnScale(fnScale);
 		oJedoGantt.initHeaderDateViewMode();
-		oJedoGantt.createGanttHeader(oGanttContainer);
 		oJedoGantt.createGanttBody(oGanttContainer);
+		oGanttContainer.on("scroll", function(event){
+			console.log("event.id:"+$(this).attr("id"));
+			console.log("scrollTop:"+$(this).scrollTop());
+			svg.select('g.ganttHeader').attr('transform', 'translate(0,'+$(this).scrollTop()+')');
+		});
+		oJedoGantt.createGanttHeader(oGanttContainer);
+		svg.node().addEventListener("mousemove",oJedoGantt.mouseMoveBar.bind(oJedoGantt),false);
+		svg.node().addEventListener("mouseup",  oJedoGantt.mouseUpBar.bind(oJedoGantt),  false);
 	};
 })(jQuery);
+
 
 
 
