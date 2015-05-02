@@ -8,22 +8,23 @@
 	<!-- Latest compiled and minified CSS -->
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
-	<link rel="stylesheet" type="text/css" href="./d3Gantt.css" />
+	<link rel="stylesheet" type="text/css" href="./jedoGantt.css" />
 	<script type="text/javascript" src="http://code.jquery.com/jquery-2.1.3.js"></script>
 	<script type="text/javascript" src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
 	<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-	<script type="text/javascript" src="./d3.min.js"></script>
+	<script type="text/javascript" src="http://oss.maxcdn.com/d3js/3.5.5/d3.min.js"></script>
 	<script type="text/javascript" src="./jedo.js"></script>
 	<script type="text/javascript" src="./jedo.JedoGantt.js"></script>
-	<script type="text/javascript" src="./d3Gantt.js"></script>
+	<script type="text/javascript" src="./jedoGantt.js"></script>
 </head>
 <body>
 	<div id="myGanttContainer"></div>
 </body>
 <script>
+"use strict";
 	$( document ).ready(function() {
 		
-        $("#myGanttContainer").myGantt({
+        $("#myGanttContainer").jedoGantt({
         	
         	startGanttDate : new Date(Date.UTC(2013, 0, 1)),
         	endGanttDate   : new Date(Date.UTC(2014, 3, 15)),
@@ -96,7 +97,7 @@
 			    {"id": "65", "title": "Describe risks and opportunities",                                     "parentId":"48", "progress": "20%",  "startDate": new Date(Date.UTC(2013,4,29,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,31,9,0,0,0)),  "connectId": "66", "connectorType": "FinishStart"},
 			    {"id": "66", "title": "Publish the business plan",                                            "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,1,2,0,0,0)),   "endDate": new Date(Date.UTC(2013,5,1,11,0,0,0)),  "connectId": "67", "connectorType": "FinishStart"},
 			    {"id": "67", "title": "Confirm decision to proceed",                                          "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,1,11,0,0,0)),  "endDate": new Date(Date.UTC(2013,5,1,11,0,0,0)),  "connectId": "69", "connectorType": "FinishStart"},
-			    {"id": "68", "title": "Phase 4 - Proceed With Startup Plan",                                                 "progress": "24%",  "startDate": new Date(Date.UTC(2013,5,1,9,0,0,0)),   "endDate": new Date(Date.UTC(2013,7,24,9,0,0,0))},
+			    {"id": "68", "title": "Phase 4 - Proceed With Startup Plan",                                                   "progress": "24%",  "startDate": new Date(Date.UTC(2013,5,1,9,0,0,0)),   "endDate": new Date(Date.UTC(2013,7,24,9,0,0,0))},
 			    {"id": "69", "title": "Choose a location",                                                    "parentId":"68", "progress": "36%",  "startDate": new Date(Date.UTC(2013,5,1,9,0,0,0)),   "endDate": new Date(Date.UTC(2013,5,2,9,0,0,0)),   "connectId": "72", "connectorType": "FinishStart"},
 			    {"id": "70", "title": "Establish Business Structure",                                         "parentId":"68", "progress": "14%",  "startDate": new Date(Date.UTC(2013,5,2,9,0,0,0)),   "endDate": new Date(Date.UTC(2013,6,11,9,0,0,0))},
 			    {"id": "71", "title": "Choose a title",                                                       "parentId":"70", "progress": "33%",  "startDate": new Date(Date.UTC(2013,5,2,9,0,0,0)),   "endDate": new Date(Date.UTC(2013,5,6,9,0,0,0))},

@@ -11,21 +11,103 @@
     GNU General Public License for more details.
 
 */
-
+"use strict";
 if(!window.hasOwnProperty("jedo")) {
-	
+
 window.jedo = {};
-window.jedo.YEAR = 1;    // Year
-window.jedo.QUARTER = 2; // 분기
-window.jedo.MONTH = 3;   // 월
-window.jedo.WEEK = 4;    // 주
-window.jedo.DATE = 5;    // 일
-window.jedo.HOUR = 6;    // 시간
-window.jedo.MIN = 7;     // 분
-window.jedo.SEC = 8;     // 초
-window.jedo.MIL = 9;     // 밀리초
-window.jedo.DATE_SCALE_TYPE_START = 1;
-window.jedo.DATE_SCALE_TYPE_END = 2;
+Object.defineProperty(window, "jedo", {
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(window.jedo, "YEAR", {
+	get: function() {
+		return 1;
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(window.jedo, "QUARTER", {
+	get: function() {
+		return 2;
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(window.jedo, "MONTH", {
+	get: function() {
+		return 3;
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(window.jedo, "WEEK", {
+	get: function() {
+		return 4;
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(window.jedo, "DATE", {
+	get: function() {
+		return 5;
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(window.jedo, "HOUR", {
+	get: function() {
+		return 6;
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(window.jedo, "MIN", {
+	get: function() {
+		return 7;
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(window.jedo, "SEC", {
+	get: function() {
+		return 8;
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(window.jedo, "MIL", {
+	get: function() {
+		return 8;
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(window.jedo, "DATE_SCALE_TYPE_START", {
+	get: function() {
+		return 21;
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(window.jedo, "DATE_SCALE_TYPE_END", {
+	get: function() {
+		return 22;
+	},
+	enumerable: false,
+	configurable: false
+});
+window.jedo.getViewModeString = function(nViewMode) {
+	if(nViewMode === window.jedo.YEAR)		return "window.jedo.YEAR";
+	if(nViewMode === window.jedo.QUARTER)	return "window.jedo.QUARTER";
+	if(nViewMode === window.jedo.MONTH)		return "window.jedo.MONTH";
+	if(nViewMode === window.jedo.WEEK)		return "window.jedo.WEEK";
+	if(nViewMode === window.jedo.DATE)		return "window.jedo.DATE";
+	if(nViewMode === window.jedo.HOUR)		return "window.jedo.HOUR";
+	if(nViewMode === window.jedo.MIN)		return "window.jedo.MIN";
+	if(nViewMode === window.jedo.SEC)		return "window.jedo.SEC";
+	if(nViewMode === window.jedo.MIL)		return "window.jedo.MIL";
+	throw new Error("window.jedo.getViewModeString nViewMode is bad");
+};
 window.jedo.getQuarter = function(oDate) {
 	if(!(oDate instanceof Date)) {
 		throw new TypeError("Param oDate is Bad");
@@ -90,63 +172,15 @@ window.jedo.getTimeFormat = function(indexLine, lineMode) {
 			format = d3.time.format("%Y년 %U주");
 		}
 	} else if(lineMode === window.jedo.DATE) {
-		format = d3.time.format("%d일");
+		format = d3.time.format("%d");
 	} else if(lineMode === window.jedo.HOUR) {
-		format = d3.time.format("%H시");
+		format = d3.time.format("%H");
 	} else {
 		throw new TypeError("lineMode["+lineMode+"] is bad");
 	}
 	return format;
 };
-window.jedo.setNextDate = function(oDate, lineMode, options) {
-	if(lineMode === window.jedo.YEAR) {
-		oDate.setMonth(12);
-		oDate.setDate(0);
-		oDate.setHours(23);
-		oDate.setMinutes(59,59,999);
-	} else if(lineMode === window.jedo.QUARTER) {
-		var nQuarter = window.jedo.getQuarter(oDate);
-		oDate.setMonth(nQuarter*3);
-		oDate.setDate(0);
-		oDate.setHours(23,59,59,999);
-	} else if(lineMode === window.jedo.MONTH) {
-		oDate.setMonth(oDate.getMonth()+1);
-		oDate.setDate(0);
-		oDate.setHours(23,59,59,999);
-	} else if(lineMode === window.jedo.WEEK) {
-		var nWeekDay = oDate.getDay();
-    	if(nWeekDay != options.startWeekDay) {
-    		oDate.setDate(oDate.getDate()+((7-nWeekDay)+options.startWeekDay));
-    	} else {
-    		oDate.setDate(oDate.getDate()+6);
-    	}
-    	oDate.setHours(23,59,59,999);
-	} else if(lineMode === window.jedo.DATE) {
-		oDate.setHours(23,59,59,999);
-	} else if(lineMode === window.jedo.HOUR) {
-		//oDate.setHours(oDate.getHours()+1);
-		oDate.setMinutes(59,59,999);
-	}
-};
-window.jedo.setEndDate = function(oDate, lineMode) {
-	if(	lineMode === window.jedo.YEAR 		|| 
-		lineMode === window.jedo.QUARTER 	|| 
-		lineMode === window.jedo.MONTH 		|| 
-		lineMode === window.jedo.WEEK       ||
-		lineMode === window.jedo.DATE		) {
-		
-		oDate.setDate(oDate.getDate()+1);
-        oDate.setHours(0,0,0,1);
-        
-	} else if(lineMode === window.jedo.HOUR) {
-		
-		oDate.setHours(oDate.getHours()+1,0,0,1);
-
-	} else {
-		throw Error("lineMode is bad");
-	}
-};
-window.jedo.createRectHeaderLine = function(svgGanttHeader, indexLine, arr) {
+window.jedo.createRectHeaderLine = function(svgGanttHeader, indexLine, lineMode, arr) {
 	
 	svgGanttHeader.selectAll('rect.rectheaderLine'+indexLine)
 		.data(arr)
@@ -163,7 +197,7 @@ window.jedo.createRectHeaderLine = function(svgGanttHeader, indexLine, arr) {
 			'stroke-width' : 0
 		});
 };
-window.jedo.createRectHeaderLineTransition = function(svgGanttHeader, indexLine, arr) {
+window.jedo.createRectHeaderLineTransition = function(svgGanttHeader, indexLine, lineMode, arr) {
 	
 	svgGanttHeader.selectAll('rect.rectheaderLine'+indexLine)
 		.data(arr)
@@ -201,14 +235,15 @@ window.jedo.getHeaderItemID = function(lineMode, sLineId, oDate) {
 		throw Error("lineMode is bad");
 	}
 };
-window.jedo.createTextHeaderLine = function(svgGanttHeader, indexLine, arr, options) {
+window.jedo.createTextHeaderLine = function(svgGanttHeader, indexLine, lineMode, arr, options) {
 	
+	var format = window.jedo.getTimeFormat(indexLine, lineMode);
 	svgGanttHeader.selectAll('text.textheaderLine'+indexLine)
 		.data(arr)
 		.enter()
 		.append('text')
 		.attr('class','textheaderLine'+indexLine)
-		.text(function(d){ return d.title; })
+		.text(function(d){ return format(d.currentDate); })
 		.attr('x', function(d){ 
 			var bbox = this.getBBox();
 			//console.log(bbox);
@@ -228,15 +263,16 @@ window.jedo.createTextHeaderLine = function(svgGanttHeader, indexLine, arr, opti
 			'font-size' : options.header.fontSize
 		});
 };
-window.jedo.createTextHeaderLineTransition = function(svgGanttHeader, indexLine, arr, options) {
+window.jedo.createTextHeaderLineTransition = function(svgGanttHeader, indexLine, lineMode, arr, options) {
 	
+	var format = window.jedo.getTimeFormat(indexLine, lineMode);
 	svgGanttHeader.selectAll('text.textheaderLine'+indexLine)
 		.data(arr)
 		.enter()
 		.append('text')
 		.attr('class','textheaderLine'+indexLine)
 		.text(function(d){
-			return d.title; 
+			return format(d.currentDate); 
 		}).attr('x', function(d){ 
 			return d.x;
 		}).attr('y', function(d){ 
@@ -377,7 +413,56 @@ window.jedo.setGanttBodyBar = function(svgGanttBody, fnPrevScale, arr, iX, oJedo
 		});
 	}
 };
-
+window.jedo.createWebWorker = function (sourceFile){
+	var requests = {}, // 키는 요청 ID이고, 값은 디퍼드다.
+		requestId = 0, // 각 메시지의 전송마다 하나씩 증가한다.
+		worker = new Worker(sourceFile),
+		sendJob = function(method, payload){
+			var deferred = $.Deferred(),
+			id = requestId++;
+			requests[id] = deferred;
+			worker.postMessage({
+				method: method,
+				payload: payload,
+				requestId: id
+			});
+			return deferred.promise();
+		},
+		handleResponse = function(response){
+			var deferred, id;
+			if (response.hasOwnProperty('requestId')){
+				id = response.requestId;
+				if (requests.hasOwnProperty(id)){
+					deferred = requests[id];
+					delete requests[id];
+					if (response.hasOwnProperty('result')){
+						deferred.resolve(response.result);
+					}
+					else {
+						deferred.reject(response.error);
+					}
+				}
+			} else {
+				// 웹 워커의 요청하지 않은 메시지. ④
+				if (response.type === 'log'){
+					console.log('워커의 응답:', response.message);
+				}
+				else {
+					console.log('Unknown message from worker:', response);
+				}
+			}
+		};
+	worker.addEventListener('message', function(event){
+		handleResponse(event.data);
+	});
+	return {
+		add: function(a, b){
+			return sendJob('add', [a, b]); },
+		ping: function(){
+			return sendJob('ping');
+		}
+	};
+};
 
 
 
