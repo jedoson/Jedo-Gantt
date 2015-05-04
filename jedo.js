@@ -108,6 +108,28 @@ window.jedo.getViewModeString = function(nViewMode) {
 	if(nViewMode === window.jedo.MIL)		return "window.jedo.MIL";
 	throw new Error("window.jedo.getViewModeString nViewMode is bad");
 };
+window.jedo.getZoomInViewMode = function(nViewMode) {
+	if(nViewMode === window.jedo.YEAR)		return window.jedo.QUARTER;
+	if(nViewMode === window.jedo.QUARTER)	return window.jedo.MONTH;
+	if(nViewMode === window.jedo.MONTH)		return window.jedo.WEEK;
+	if(nViewMode === window.jedo.WEEK)		return window.jedo.DATE;
+	if(nViewMode === window.jedo.DATE)		return window.jedo.HOUR;
+	if(nViewMode === window.jedo.HOUR)		return window.jedo.MIN;
+	if(nViewMode === window.jedo.MIN)		return window.jedo.SEC;
+	if(nViewMode === window.jedo.SEC)		return window.jedo.MIL;
+	throw new Error("window.jedo.getZoomInViewMode nViewMode is bad");
+};
+window.jedo.getZoomOutViewMode = function(nViewMode) {
+	if(nViewMode === window.jedo.QUARTER)	return window.jedo.YEAR;
+	if(nViewMode === window.jedo.MONTH)		return window.jedo.QUARTER;
+	if(nViewMode === window.jedo.WEEK)		return window.jedo.MONTH;
+	if(nViewMode === window.jedo.DATE)		return window.jedo.WEEK;
+	if(nViewMode === window.jedo.HOUR)		return window.jedo.DATE;
+	if(nViewMode === window.jedo.MIN)		return window.jedo.HOUR;
+	if(nViewMode === window.jedo.SEC)		return window.jedo.MIN;
+	if(nViewMode === window.jedo.MIL)		return window.jedo.SEC;
+	throw new Error("window.jedo.getZoomOutViewMode nViewMode is bad");
+};
 window.jedo.getQuarter = function(oDate) {
 	if(!(oDate instanceof Date)) {
 		throw new TypeError("Param oDate is Bad");
@@ -153,12 +175,27 @@ window.jedo.getSVGCursorPoint = function(svg, event) {
     var b = a.inverse();
     return pt.matrixTransform(b);
 };
+window.jedo.getMarkPoints = function(iX, iY, iW, iH) {
+	var mH = (iH/5)*3;
+	var mT = iH/3;
+	//console.log("iX:%i, iY:%i, iW:%i, iH:%i ",iX, iY, iW, iH);
+	return [ { "x": iX-mT,  "y": iY},  
+             { "x": iX+mT,  "y": iY},
+             { "x": iX+mT,  "y": iY+mH}, 
+             { "x": iX,  	"y": iY+iH},
+             { "x": iX-mT,  "y": iY+mH}
+           ];
+};
 window.jedo.getTimeFormat = function(indexLine, lineMode) {
 	var format = null;
 	if(lineMode === window.jedo.YEAR) {
 		format = d3.time.format("%Y년");
 	} else if(lineMode === window.jedo.QUARTER) {
 		format = d3.time.format("%Y년");
+		return function(oDate) {
+			var nQ = window.jedo.getQuarter(oDate);
+			return format(oDate)+"/"+nQ+"분기";
+		};
 	} else if(lineMode === window.jedo.MONTH) {
 		if(1 < indexLine) {
 			format = d3.time.format("%m월");
@@ -179,6 +216,174 @@ window.jedo.getTimeFormat = function(indexLine, lineMode) {
 		throw new TypeError("lineMode["+lineMode+"] is bad");
 	}
 	return format;
+};
+window.jedo.getDateViewMode = function(options, oFnScale) {
+	//console.log("s -- window.jedo.getDateViewMode -- ");
+
+	var oDate = new Date();
+	oDate.setTime(options.startGanttDate.getTime());
+	oDate.setMonth(0);
+	oDate.setDate(1);
+	oDate.setHours(0,0,0,0);
+	var iSPos = oFnScale(oDate);
+	
+	oDate.setHours(23,59,59,999);
+	var iWidth = oFnScale(oDate) - iSPos;
+	//console.debug("One Date["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
+	if(options.unitWidth <= iWidth) {
+		return window.jedo.DATE;
+	}
+	
+	
+	oDate.setDate(7);
+	iWidth = oFnScale(oDate) - iSPos;
+	//console.debug("One Week["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
+	if(options.unitWidth <= iWidth) {
+		return window.jedo.WEEK;
+	}
+	
+	
+	oDate.setMonth(oDate.getMonth()+1);
+	oDate.setDate(0);
+	iWidth = oFnScale(oDate) - iSPos;
+	//console.debug("One Month["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
+	if(options.unitWidth <= iWidth) {
+		return window.jedo.MONTH;
+	}
+	
+	oDate.setTime(this.options.startGanttDate.getTime());
+	oDate.setMonth(3);
+	oDate.setDate(0);
+	iWidth = oFnScale(oDate) - iSPos;
+	//console.debug("One Quarter["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
+	if(options.unitWidth <= iWidth) {
+		return window.jedo.QUARTER;
+	}
+	
+	oDate.setMonth(12, 0);
+	iWidth = oFnScale(oDate) - iSPos;
+	//console.debug("One Year["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
+	if(options.unitWidth <= iWidth) {
+		return window.jedo.YEAR;
+	} 
+
+	throw new Error("getDateViewMode dateViewMode Not define");
+	//console.log("e -- window.jedo.getDateViewMode -- ");
+};
+window.jedo.getChangeSvgWidth = function(nDateViewMode, fnScale, options, svg) {
+	//console.log("s -- window.jedo.JedoGantt.prototype.getChangeSvgWidth -- ");
+	
+	var xWidth = svg.attr('width');
+	var xHeight = svg.attr('height');
+	
+	var oDate = new Date();
+	oDate.setTime(options.startGanttDate.getTime());
+	oDate.setMonth(0);
+	oDate.setDate(1);
+	oDate.setHours(0,0,0,0);
+	var iSPos = fnScale(oDate, window.jedo.DATE_SCALE_TYPE_START);
+	
+	var iWidth = 0;
+	var nWidth = xWidth;
+	switch (nDateViewMode) {
+		case window.jedo.YEAR :    // Year
+	    	oDate.setMonth(12);
+	    	oDate.setDate(0);
+	    	oDate.setHours(23,59,59,999);
+			iWidth = fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
+			//console.debug("One YEAR["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
+			if(iWidth < options.unitWidth) {
+				nWidth = ( xWidth / iWidth ) * options.unitWidth;
+				//console.debug("change YEAR["+window.jedo.getFomattedDate(oDate)+"] nWidth:"+nWidth);
+			}
+			break;
+		case window.jedo.QUARTER : // 분기
+			var nQuarter = window.jedo.getQuarter(oDate);
+	    	var nMonth = nQuarter*3;
+	    	oDate.setMonth(nMonth);
+	    	oDate.setDate(0);
+	    	oDate.setHours(23,59,59,999);
+			iWidth = fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
+			//console.debug("One QUARTER["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
+			if(iWidth < options.unitWidth) {
+				nWidth = ( xWidth / iWidth ) * options.unitWidth;
+				//console.debug("change QUARTER["+window.jedo.getFomattedDate(oDate)+"] nWidth:"+nWidth);
+			}
+			break;
+		case window.jedo.MONTH :   // 월
+			oDate.setMonth(oDate.getMonth()+1);
+			oDate.setDate(0);
+			oDate.setHours(23,59,59,999);
+			iWidth = fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
+			//console.debug("One MONTH["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
+			if(iWidth < options.unitWidth) {
+				nWidth = ( xWidth / iWidth ) * options.unitWidth;
+				//console.debug("change MONTH["+window.jedo.getFomattedDate(oDate)+"] nWidth:"+nWidth);
+			}
+			break;
+		case window.jedo.WEEK :    // 주
+			oDate.setDate(7);
+			oDate.setHours(23,59,59,999);
+			iWidth = fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
+			//console.debug("One Week["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
+			if(iWidth < options.unitWidth) {
+				nWidth = ( xWidth / iWidth ) * options.unitWidth;
+				//console.debug("change Week["+window.jedo.getFomattedDate(oDate)+"] nWidth:"+nWidth);
+			}
+			break;
+		case window.jedo.DATE :    // 일
+			oDate.setDate(oDate.getDate()+1);
+			oDate.setHours(23,59,59,999);
+			iWidth = fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
+			//console.debug("One DATE["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
+			if(iWidth < options.unitWidth) {
+				nWidth = ( xWidth / iWidth ) * options.unitWidth;
+				//console.debug("change DATE["+window.jedo.getFomattedDate(oDate)+"] nWidth:"+nWidth);
+			}
+			break;
+		case window.jedo.HOUR :    // 시간
+			//console.debug("window.jedo.HOUR -- DATE["+window.jedo.getFomattedDate(oDate)+"]h:"+oDate.getHours());
+			oDate.setHours(oDate.getHours()+1,59,59,999);
+			iWidth = fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
+			//console.debug("One HOUR["+window.jedo.getFomattedDate(oDate)+"]h:"+oDate.getHours()+" Width:"+iWidth);
+			iWidth = iWidth == 0 ? 1 : iWidth;
+			if(iWidth < options.unitWidth) {
+				nWidth = ( xWidth / iWidth ) * options.unitWidth;
+				//console.debug("change HOUR["+window.jedo.getFomattedDate(oDate)+"]h:"+oDate.getHours()+" nWidth:"+nWidth);
+			}
+			break;
+		case window.jedo.MIN :     // 분
+			oDate.setMinutes(oDate.getMinutes()+1,59,999);
+			iWidth = fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
+			//console.debug("One MIN["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
+			if(iWidth < options.unitWidth) {
+				nWidth = ( xWidth / iWidth ) * options.unitWidth;
+				//console.debug("change MIN["+window.jedo.getFomattedDate(oDate)+"] nWidth:"+nWidth);
+			}
+			break;
+		case window.jedo.SEC :     // 초
+			oDate.setSeconds(oDate.getSeconds()+1,999);
+			iWidth = fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
+			//console.debug("One SEC["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
+			if(iWidth < options.unitWidth) {
+				nWidth = ( xWidth / iWidth ) * options.unitWidth;
+				//console.debug("change SEC["+window.jedo.getFomattedDate(oDate)+"] nWidth:"+nWidth);
+			}
+			break;
+		case window.jedo.MIL :     // 밀리초
+			oDate.setMilliseconds(oDate.getMilliseconds()+1);
+			iWidth = fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
+			//console.debug("One MIL["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
+			if(iWidth < options.unitWidth) {
+				nWidth = ( xWidth / iWidth ) * options.unitWidth;
+				//console.debug("change MIL["+window.jedo.getFomattedDate(oDate)+"] nWidth:"+nWidth);
+			}
+			break;
+		default :
+			throw new TypeError("Param nDateViewMode["+nDateViewMode+"] is Bad");
+	}
+	return nWidth;
+	//console.log("e -- window.jedo.JedoGantt.prototype.getChangeSvgWidth -- ");
 };
 window.jedo.createRectHeaderLine = function(svgGanttHeader, indexLine, lineMode, arr) {
 	
@@ -334,11 +539,11 @@ window.jedo.setGanttBodyBar = function(svgGanttBody, fnPrevScale, arr, iX, oJedo
 					var oThis = d3.select(this);
 					if(oThis.attr("id") == "startMarkGanttBar_"+o.id) {
 						
-						var polyData = oJedoGantt.getMarkPoints(o.x2, o.y1, o.w2, o.h1);
+						var polyData = window.jedo.getMarkPoints(o.x2, o.y1, o.w2, o.h1);
 						return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" "); 
 					} else if(oThis.attr("id") == "endMarkGanttBar_"+o.id) {
 						
-						var polyData = oJedoGantt.getMarkPoints(o.x2+o.w2, o.y1, o.w2, o.h1);
+						var polyData = window.jedo.getMarkPoints(o.x2+o.w2, o.y1, o.w2, o.h1);
 						return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" "); 
 					} 
 					return null;
@@ -351,11 +556,12 @@ window.jedo.setGanttBodyBar = function(svgGanttBody, fnPrevScale, arr, iX, oJedo
 							.enter()
 							.append('g')
 							.attr('class', 'gGanttBar')
-							.attr('id', function(d){ return "gGanttBar_"+d.id})
-							.attr('dataID', function(d){ return d.id})
-							.attr('isParent', function(d){ return d.isParent})
-							.attr('parentId', function(d){ return d.parentId})
-							.attr('ganttBarHeight', function(d){ return d.ganttBarHeight});
+							.attr('id', function(d){ return "gGanttBar_"+d.id;})
+							.attr('dataID', function(d){ return d.id;})
+							.attr('dataIndex', function(d,i){ return i;})
+							.attr('isParent', function(d){ return d.isParent;})
+							.attr('parentId', function(d){ return d.parentId;})
+							.attr('ganttBarHeight', function(d){ return d.ganttBarHeight;});
 		
 		aGanttBodyBar.append("rect").attr('class', 'rectGanttBar')
 							.attr('id', function(d){ return "rectGanttBar_"+d.id})
@@ -381,7 +587,7 @@ window.jedo.setGanttBodyBar = function(svgGanttBody, fnPrevScale, arr, iX, oJedo
 			//console.log("d.id:"+d.id+" d.isParent:"+d.isParent);
 			if(d.isParent) {
 				// start Group Mark.
-				var polyData = oJedoGantt.getMarkPoints(d.x1, d.y1, d.w1, d.h1);
+				var polyData = window.jedo.getMarkPoints(d.x1, d.y1, d.w1, d.h1);
 				svgGanttBody.select("#gGanttBar_"+d.id).append("polygon")
 						.attr("id", "startMarkGanttBar_"+d.id)
 						.attr("class", "startMarkGanttBar")
@@ -396,7 +602,7 @@ window.jedo.setGanttBodyBar = function(svgGanttBody, fnPrevScale, arr, iX, oJedo
 						.attr('dataID', function(d){ return d.id});
 				
 				// end group Mark.
-				polyData = oJedoGantt.getMarkPoints(d.x1+d.w1, d.y1, d.w1, d.h1);
+				polyData = window.jedo.getMarkPoints(d.x1+d.w1, d.y1, d.w1, d.h1);
 				svgGanttBody.select("#gGanttBar_"+d.id).append("polygon")
 						.attr("id", "endMarkGanttBar_"+d.id)
 						.attr("class", "endMarkGanttBar")

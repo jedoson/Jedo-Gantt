@@ -86,8 +86,7 @@
 					.attr("width", nWidth)
 					.attr("height", (options.ganttData.length+options.header.viewLineCount)*options.lineHeight);
 		var oJedoGantt = new window.jedo.JedoGantt(options, this, svg);
-		oJedoGantt.fnScale = window.jedo.getFnScale(options.startGanttDate, options.endGanttDate, 0, nWidth);
-		oJedoGantt.initJedoGantt();
+		oJedoGantt.initJedoGantt(nWidth);
 		oGanttContainer.on("scroll", function(event){
 			svg.select('g.ganttHeader').attr('transform', 'translate(0,'+$(this).scrollTop()+')');
 			svg.select('rect.ganttHeaderBack').attr('transform', 'translate('+$(this).scrollLeft()+',0)');

@@ -18,6 +18,7 @@ if(typeof(Worker) === "undefined") {
 } 
 
 if(!window.jedo.hasOwnProperty("JedoGantt")) {
+	
 window.jedo.JedoGantt = function (options, ganttContainer, svg) {
 	
 	Object.defineProperty(this, "options", {
@@ -44,110 +45,147 @@ window.jedo.JedoGantt = function (options, ganttContainer, svg) {
 		configurable: false
 	});
 	
+	// -------------------------------------------------------------------------------------//
+	var _ganttViewMode = [];
+	var _settingGanttData = {};
+	var _getSettingGanttData = function(nViewMode) {
+		var sViewMode = window.jedo.getViewModeString(nViewMode);
+		return _settingGanttData[sViewMode];
+	};
+	var _setSettingGanttData = function(nViewMode, oSettingGanttData) {
+		var sViewMode = window.jedo.getViewModeString(nViewMode);
+		if(!oSettingGanttData instanceof window.jedo.SettingGanttData) {
+			throw new Error("parameter oSettingGanttData is not instance of window.jedo.SettingGanttData ");
+		}
+		var o = _settingGanttData[sViewMode];
+		if(o != null) {
+			throw new Error("ViewMode %s is already in ", sViewMode);
+		}
+		_settingGanttData[sViewMode] = oSettingGanttData;
+		_ganttViewMode.push(nViewMode);
+	};
+	Object.defineProperty(this, "getSettingGanttData", {
+		get: function() {
+			return _getSettingGanttData;
+		},
+		enumerable: false,
+		configurable: false
+	});
+	Object.defineProperty(this, "setSettingGanttData", {
+		get: function() {
+			return _setSettingGanttData;
+		},
+		enumerable: false,
+		configurable: false
+	});
 	
-	var _dateViewMode = window.jedo.DATE;
 	Object.defineProperty(this, "dateViewMode", {
 		get: function() {
-			return _dateViewMode;
+			return _ganttViewMode[_ganttViewMode.length-1];
 		},
-		set: function(viewMode) {
-			console.log("s -- set dateViewMode ---------------");
-			console.log("viewMode:"+window.jedo.getViewModeString(viewMode));
-			_dateViewMode = viewMode;
-			console.log("e -- set dateViewMode ---------------");
-		},
-		enumerable: false,
-		configurable: false
-	});
-
-		
-	Object.defineProperty(this, "ganttTableId", {
-		get: function() {
-			return this.ganttContainer.getAttribute("id")+"_ganttTable";
+		set: function(nViewMode) {
+			if(this.isDateViewMode(nViewMode)) {
+				_ganttViewMode.push(nViewMode);
+			} else {
+				throw new Error("Date ViewMode Setting Data Not found !.");
+			}
 		},
 		enumerable: false,
 		configurable: false
 	});
 	
-	Object.defineProperty(this, "ganttHeaderId", {
-		get: function() {
-			return this.ganttContainer.getAttribute("id")+"_ganttHeader";
-		},
-		enumerable: false,
-		configurable: false
-	});
-	
-	Object.defineProperty(this, "ganttBodyId", {
-		get: function() {
-			return this.ganttContainer.getAttribute("id")+"_ganttBody";
-		},
-		enumerable: false,
-		configurable: false
-	});
-	
-	var ganttDate = {};
-	this.setGanttDateX = function(sGanttDate, iLeft) {
-		ganttDate[sGanttDate] = iLeft;
+	var _isDateViewMode = function(nViewMode) {
+		var sViewMode = window.jedo.getViewModeString(nViewMode);
+		return _settingGanttData[sViewMode] !== undefined;
 	};
-	this.getGanttDateX = function(sGanttDate) {
-		return ganttDate[sGanttDate];
-	};
+	Object.defineProperty(this, "isDateViewMode", {
+		get: function() {
+			return _isDateViewMode;
+		},
+		enumerable: false,
+		configurable: false
+	});
+	
+	Object.defineProperty(this, "prevSvgWidth", {
+		get: function() {
+			if(_ganttViewMode.length < 2) return null;
+			var nDateViewMode = _ganttViewMode[_ganttViewMode.length-2];
+			var oGanttData = this.getSettingGanttData(nDateViewMode);
+			return oGanttData.svgWidth;
+		},
+		enumerable: false,
+		configurable: false
+	});
+	
+	Object.defineProperty(this, "dateViewModeSvgWidth", {
+		get: function() {
+			var nDateViewMode = this.dateViewMode;
+			var oGanttData = this.getSettingGanttData(nDateViewMode);
+			return oGanttData.svgWidth;
+		},
+		enumerable: false,
+		configurable: false
+	});
+	
 	
 
-	
-	var _fnScale = null;
-	var _arrFnPrevScale = [];
 	Object.defineProperty(this, "fnScale", {
 		get: function() {
-			return _fnScale;
-		},
-		set: function(fnScale) {
-			if(_fnScale) {
-				_arrFnPrevScale[_arrFnPrevScale.length] = _fnScale;
-			}
-			_fnScale = fnScale;
+			var nDateViewMode = this.dateViewMode;
+			var oGanttData = this.getSettingGanttData(nDateViewMode);
+			return oGanttData.fnScale;
 		},
 		enumerable: false,
 		configurable: false
 	});
 	Object.defineProperty(this, "fnPrevScale", {
 		get: function() {
-			if(0 < _arrFnPrevScale.length) {
-				return _arrFnPrevScale[_arrFnPrevScale.length-1];
-			} else {
-				return null;
-			}
+			if(_ganttViewMode.length < 2) return null;
+			var nDateViewMode = _ganttViewMode[_ganttViewMode.length-2];
+			var oGanttData = this.getSettingGanttData(nDateViewMode);
+			return oGanttData.fnScale;
 		},
 		enumerable: false,
 		configurable: false
 	});
 	
 	
-	var _ganttHeaderData = {};
-	var _getGanttHeaderData = function(indexLine, lineMode) {
-		var arr = _ganttHeaderData["HL"+indexLine+"M"+lineMode];
-		return arr;
-	};
-	var _setGanttHeaderData = function(indexLine, lineMode, arr) {
-		_ganttHeaderData["HL"+indexLine+"M"+lineMode] = arr;
-	};
 	Object.defineProperty(this, "getGanttHeaderData", {
 		get: function() {
-			return _getGanttHeaderData;
+			var nDateViewMode = this.dateViewMode;
+			var oGanttData = this.getSettingGanttData(nDateViewMode);
+			return oGanttData.getGanttHeaderData;
 		},
 		enumerable: false,
 		configurable: false
 	});
 	Object.defineProperty(this, "setGanttHeaderData", {
 		get: function() {
-			return _setGanttHeaderData;
+			var nDateViewMode = this.dateViewMode;
+			var oGanttData = this.getSettingGanttData(nDateViewMode);
+			return oGanttData.setGanttHeaderData;
 		},
 		enumerable: false,
 		configurable: false
 	});
 	
+
+	Object.defineProperty(this, "ganttBodyData", {
+		get: function() {
+			var nDateViewMode = this.dateViewMode;
+			var oGanttData = this.getSettingGanttData(nDateViewMode);
+			return oGanttData.ganttBodyData;
+		},
+		set: function(nData) {
+			var nDateViewMode = this.dateViewMode;
+			var oGanttData = this.getSettingGanttData(nDateViewMode);
+			oGanttData.ganttBodyData = nData;
+		},
+		enumerable: false,
+		configurable: false
+	});
 	
-	
+	// -------------------------------------------------------------------------------------//
 	var _capturedMode = null;
 	Object.defineProperty(this, "capturedMode", {
 		get: function() {
@@ -196,12 +234,8 @@ window.jedo.JedoGantt = function (options, ganttContainer, svg) {
 		configurable: false
 	});
 };
-window.jedo.JedoGantt.prototype.initJedoGantt = function() {
+window.jedo.JedoGantt.prototype.initJedoGantt = function(nSvgWidth) {
 	//console.log("s -- window.jedo.JedoGantt.prototype.initJedoGantt -- ");
-	//console.log('this.svg.attr("width"):%i', this.svg.attr("width"));
-	//this.fnScale = window.jedo.getFnScale(this.options.startGanttDate, this.options.endGanttDate, 0, this.svg.attr("width"));
-	
-	
 	var defs = this.svg.append("defs");
     var headerGradient = defs.append("linearGradient")
 		 	.attr("id", "headerGradient")
@@ -251,204 +285,25 @@ window.jedo.JedoGantt.prototype.initJedoGantt = function() {
 			.attr("stop-color", "#2F4F4F")
 			.attr("stop-opacity", 1);
 
-	this.initHeaderDateViewMode();
+    var oFnScale = window.jedo.getFnScale(this.options.startGanttDate, this.options.endGanttDate, 0, nSvgWidth);
+    var nDateViewMode = window.jedo.getDateViewMode(this.options, oFnScale);
+    //console.log("sDateViewMode:"+window.jedo.getViewModeString(nDateViewMode));
+    this.setSettingGanttData(nDateViewMode, 
+    		new window.jedo.SettingGanttData(nDateViewMode, nSvgWidth, oFnScale));
+    //console.log("this.dateViewMode:"+window.jedo.getViewModeString(this.dateViewMode));
 	this.createGanttBody();
 	this.createGanttHeader();
 	
 
 	//console.log("e -- window.jedo.JedoGantt.prototype.initJedoGantt -- ");
 };
-window.jedo.JedoGantt.prototype.initHeaderDateViewMode = function() {
-	//console.log("s -- window.jedo.JedoGantt.prototype.initHeaderDateViewMode -- ");
-	//var fnScale = this.getFnScale();
-	
-	var oDate = new Date();
-	oDate.setTime(this.options.startGanttDate.getTime());
-	oDate.setMonth(0);
-	oDate.setDate(1);
-	oDate.setHours(0,0,0,0);
-	var iSPos = this.fnScale(oDate);
-	
-	oDate.setHours(23,59,59,999);
-	var iWidth = this.fnScale(oDate) - iSPos;
-	//console.debug("One Date["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
-	if(this.options.unitWidth <= iWidth) {
-		this.dateViewMode = window.jedo.DATE;
-		return;
-	}
-	
-	
-	oDate.setDate(7);
-	iWidth = this.fnScale(oDate) - iSPos;
-	//console.debug("One Week["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
-	if(this.options.unitWidth <= iWidth) {
-		this.dateViewMode = window.jedo.WEEK;
-		return;
-	}
-	
-	
-	oDate.setMonth(oDate.getMonth()+1);
-	oDate.setDate(0);
-	iWidth = this.fnScale(oDate) - iSPos;
-	//console.debug("One Month["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
-	if(this.options.unitWidth <= iWidth) {
-		this.dateViewMode = window.jedo.MONTH;
-		return;
-	}
-	
-	oDate.setTime(this.options.startGanttDate.getTime());
-	oDate.setMonth(3);
-	oDate.setDate(0);
-	iWidth = this.fnScale(oDate) - iSPos;
-	//console.debug("One Quarter["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
-	if(this.options.unitWidth <= iWidth) {
-		this.dateViewMode = window.jedo.QUARTER;
-		return;
-	}
-	
-	oDate.setMonth(12, 0);
-	iWidth = this.fnScale(oDate) - iSPos;
-	//console.debug("One Year["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
-	if(this.options.unitWidth <= iWidth) {
-		this.dateViewMode = window.jedo.YEAR;
-		return;
-	} 
-
-	throw new Error("initHeaderDateViewMode dateViewMode Not define");
-	//console.log("e -- window.jedo.JedoGantt.prototype.initHeaderDateViewMode -- ");
-};
-window.jedo.JedoGantt.prototype.changeDateViewMode = function(nHeaderDateViewMode) {
-	//console.log("s -- window.jedo.JedoGantt.prototype.changeDateViewMode -- ");
-	//var fnScale = this.getFnScale();
-	//var options = this.options;
-	
-	var xWidth = this.svg.attr('width');
-	var xHeight = this.svg.attr('height');
-	
-	var oDate = new Date();
-	oDate.setTime(this.options.startGanttDate.getTime());
-	oDate.setMonth(0);
-	oDate.setDate(1);
-	oDate.setHours(0,0,0,0);
-	var iSPos = this.fnScale(oDate, window.jedo.DATE_SCALE_TYPE_START);
-	
-	var iWidth = 0;
-	var nWidth = xWidth;
-	switch (nHeaderDateViewMode) {
-		case window.jedo.YEAR :    // Year
-	    	oDate.setMonth(12);
-	    	oDate.setDate(0);
-	    	oDate.setHours(23,59,59,999);
-			iWidth = this.fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
-			//console.debug("One YEAR["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
-			if(iWidth < this.options.unitWidth) {
-				nWidth = ( xWidth / iWidth ) * options.unitWidth;
-				//console.debug("change YEAR["+window.jedo.getFomattedDate(oDate)+"] nWidth:"+nWidth);
-			}
-			this.dateViewMode = window.jedo.YEAR;
-			break;
-		case window.jedo.QUARTER : // 분기
-			var nQuarter = window.jedo.getQuarter(oDate);
-	    	var nMonth = nQuarter*3;
-	    	oDate.setMonth(nMonth);
-	    	oDate.setDate(0);
-	    	oDate.setHours(23,59,59,999);
-			iWidth = this.fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
-			//console.debug("One QUARTER["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
-			if(iWidth < this.options.unitWidth) {
-				nWidth = ( xWidth / iWidth ) * this.options.unitWidth;
-				//console.debug("change QUARTER["+window.jedo.getFomattedDate(oDate)+"] nWidth:"+nWidth);
-			}
-			this.dateViewMode = window.jedo.QUARTER;
-			break;
-		case window.jedo.MONTH :   // 월
-			oDate.setMonth(oDate.getMonth()+1);
-			oDate.setDate(0);
-			oDate.setHours(23,59,59,999);
-			iWidth = this.fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
-			//console.debug("One MONTH["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
-			if(iWidth < this.options.unitWidth) {
-				nWidth = ( xWidth / iWidth ) * this.options.unitWidth;
-				//console.debug("change MONTH["+window.jedo.getFomattedDate(oDate)+"] nWidth:"+nWidth);
-			}
-			this.dateViewMode = window.jedo.MONTH;
-			break;
-		case window.jedo.WEEK :    // 주
-			oDate.setDate(7);
-			oDate.setHours(23,59,59,999);
-			iWidth = this.fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
-			//console.debug("One Week["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
-			if(iWidth < this.options.unitWidth) {
-				nWidth = ( xWidth / iWidth ) * this.options.unitWidth;
-				//console.debug("change Week["+window.jedo.getFomattedDate(oDate)+"] nWidth:"+nWidth);
-			}
-			this.dateViewMode = window.jedo.WEEK;
-			break;
-		case window.jedo.DATE :    // 일
-			oDate.setDate(oDate.getDate()+1);
-			oDate.setHours(23,59,59,999);
-			iWidth = this.fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
-			//console.debug("One DATE["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
-			if(iWidth < this.options.unitWidth) {
-				nWidth = ( xWidth / iWidth ) * this.options.unitWidth;
-				//console.debug("change DATE["+window.jedo.getFomattedDate(oDate)+"] nWidth:"+nWidth);
-			}
-			this.dateViewMode = window.jedo.DATE;
-			break;
-		case window.jedo.HOUR :    // 시간
-			//console.debug("window.jedo.HOUR -- DATE["+window.jedo.getFomattedDate(oDate)+"]h:"+oDate.getHours());
-			oDate.setHours(oDate.getHours()+1,59,59,999);
-			iWidth = this.fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
-			//console.debug("One HOUR["+window.jedo.getFomattedDate(oDate)+"]h:"+oDate.getHours()+" Width:"+iWidth);
-			iWidth = iWidth == 0 ? 1 : iWidth;
-			if(iWidth < this.options.unitWidth) {
-				nWidth = ( xWidth / iWidth ) * this.options.unitWidth;
-				//console.debug("change HOUR["+window.jedo.getFomattedDate(oDate)+"]h:"+oDate.getHours()+" nWidth:"+nWidth);
-			}
-			this.dateViewMode = window.jedo.HOUR;
-			break;
-		case window.jedo.MIN :     // 분
-			oDate.setMinutes(oDate.getMinutes()+1,59,999);
-			iWidth = this.fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
-			//console.debug("One MIN["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
-			if(iWidth < this.options.unitWidth) {
-				nWidth = ( xWidth / iWidth ) * this.options.unitWidth;
-				//console.debug("change MIN["+window.jedo.getFomattedDate(oDate)+"] nWidth:"+nWidth);
-			}
-			this.dateViewMode = window.jedo.MIN;
-			break;
-		case window.jedo.SEC :     // 초
-			oDate.setSeconds(oDate.getSeconds()+1,999);
-			iWidth = this.fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
-			//console.debug("One SEC["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
-			if(iWidth < this.options.unitWidth) {
-				nWidth = ( xWidth / iWidth ) * this.options.unitWidth;
-				//console.debug("change SEC["+window.jedo.getFomattedDate(oDate)+"] nWidth:"+nWidth);
-			}
-			this.dateViewMode = window.jedo.SEC;
-			break;
-		case window.jedo.MIL :     // 밀리초
-			oDate.setMilliseconds(oDate.getMilliseconds()+1);
-			iWidth = this.fnScale(oDate, window.jedo.DATE_SCALE_TYPE_END) - iSPos;
-			//console.debug("One MIL["+window.jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
-			if(iWidth < this.options.unitWidth) {
-				nWidth = ( xWidth / iWidth ) * this.options.unitWidth;
-				//console.debug("change MIL["+window.jedo.getFomattedDate(oDate)+"] nWidth:"+nWidth);
-			}
-			this.dateViewMode = window.jedo.MIL;
-			break;
-		default :
-			throw new TypeError("Param nHeaderDateViewMode["+nHeaderDateViewMode+"] is Bad");
-	}
-	this.fnScale = window.jedo.getFnScale(this.options.startGanttDate, this.options.endGanttDate, 0, nWidth);
-	this.svg.attr("width", nWidth);
-	//console.log("e -- window.jedo.JedoGantt.prototype.changeDateViewMode -- ");
-};
 window.jedo.JedoGantt.prototype.changeGanttViewMode = function(svgPoint, nDateViewMode) {
-	console.log("s -- window.jedo.JedoGantt.prototype.changeGanttViewMode -- ");
-
-	var nSvgWidth = this.svg.attr("width");
+	//console.log("s -- window.jedo.JedoGantt.prototype.changeGanttViewMode -- ");
+	//console.log("nDateViewMode:"+window.jedo.getViewModeString(nDateViewMode));
+	//console.log("now this.dateViewMode:"+window.jedo.getViewModeString(this.dateViewMode));
 	
+	var nSvgToWidth = 0;
+	var nSvgWidth = this.svg.attr("width");
 	if(window.jedo.DATE < nDateViewMode) {
 		console.debug("nHeaderDateViewMode["+nDateViewMode+"] is bad");
 		return;
@@ -457,13 +312,31 @@ window.jedo.JedoGantt.prototype.changeGanttViewMode = function(svgPoint, nDateVi
 		console.debug("nHeaderDateViewMode["+nDateViewMode+"] is bad");
 		return;
 	}
-	console.log("2 -----------------------------------------------------------");
-	this.changeDateViewMode(nDateViewMode);
-	console.log("3 -----------------------------------------------------------");
 	
-	var nSvgToWidth = this.svg.attr("width");
+	var bDataViewMode = this.isDateViewMode(nDateViewMode);
+	if(!bDataViewMode) {
+		nSvgToWidth = window.jedo.getChangeSvgWidth(nDateViewMode, this.fnScale, this.options, this.svg);
+		var oFnScale = window.jedo.getFnScale(this.options.startGanttDate, this.options.endGanttDate, 0, nSvgToWidth);
+		this.setSettingGanttData(nDateViewMode, 
+	    		new window.jedo.SettingGanttData(nDateViewMode, nSvgToWidth, oFnScale));
+		
+	} else {
+		this.dateViewMode = nDateViewMode;
+		nSvgToWidth = this.dateViewModeSvgWidth;
+	}
+	
+	this.svg.attr("width", nSvgToWidth);
+	
 	this.svg.select('rect.ganttHeaderBg').attr('width', nSvgToWidth);
 	this.svg.select('rect.ganttBodyBg').attr('width', nSvgToWidth);
+	
+	this.changeGanttHeaderViewMode(svgPoint, nSvgWidth, nSvgToWidth);
+	this.changeGanttBodyViewMode(svgPoint, nSvgWidth, nSvgToWidth);
+	
+	//console.log("e -- window.jedo.JedoGantt.prototype.changeGanttViewMode -- ");
+};
+window.jedo.JedoGantt.prototype.changeGanttHeaderViewMode = function(svgPoint, nSvgWidth, nSvgToWidth) {
+	//console.log("s -- window.jedo.JedoGantt.prototype.changeGanttHeaderViewMode -- ");
 	
 	var _arrDeferred = [];
 	var _arrPromise = [];
@@ -471,16 +344,14 @@ window.jedo.JedoGantt.prototype.changeGanttViewMode = function(svgPoint, nDateVi
 	var oJedoWorker = {};
 	var _oJedoGantt = this;
 	
-	console.log("4 -----------------------------------------------------------");
-	
 	var i = 0;
 	var n = this.options.header.viewLineCount;
 	for(i=0; i<n; i++) {
-		_arrDeferred[i] = $.Deferred();
 		var nLineMode = this.dateViewMode-(n-(i+1));
-		console.log("nLineMode:"+nLineMode);
+		//console.log("nLineMode:"+window.jedo.getViewModeString(nLineMode));
 		var arr = this.getGanttHeaderData(i, nLineMode);
 		if(arr == null) {
+			_arrDeferred[i] = $.Deferred();
 			oJedoWorker["jedoWorker"+i] = new Worker("jedo.JedoWorker.js");
 	    	oJedoWorker["jedoWorker"+i].postMessage({
 	    		"cmd": "SettingHeaderGanttData",
@@ -499,51 +370,48 @@ window.jedo.JedoGantt.prototype.changeGanttViewMode = function(svgPoint, nDateVi
 	    			break;
 	    		} 
 	    	}, false);
+	    	_arrPromise[_arrPromise.length] = _arrDeferred[i].promise();
 		} else {
-			_oJedoGantt.setHeaderLineMode(i, nDateViewMode, arr);
+			_oJedoGantt.setHeaderLineMode(i, nLineMode, arr);
 		}
-		_arrPromise[_arrPromise.length] = _arrDeferred[i].promise();
 	}
 	
-	console.log("5 -----------------------------------------------------------");
-	
-	$.when(_arrPromise[0],_arrPromise[1],_arrPromise[2]).done(function(){
-		console.log("s -- $.when() ---------------------------------------");
+	if(0 < _arrPromise.length) {
+		$.when.apply($, _arrPromise).done(function(){
+			_oJedoGantt.createGanttHeaderBack();
+		});
+	} else {
 		_oJedoGantt.createGanttHeaderBack();
-		console.log("e -- $.when() ---------------------------------------");
-	});
-	
-	console.log("6 -----------------------------------------------------------");
-	
+	}
+	//console.log("e -- window.jedo.JedoGantt.prototype.changeGanttHeaderViewMode -- ");
+};
+window.jedo.JedoGantt.prototype.changeGanttBodyViewMode = function(svgPoint, nSvgWidth, nSvgToWidth) {
+	//console.log("s -- window.jedo.JedoGantt.prototype.changeGanttBodyViewMode -- ");
 	//this.setBodyGanttBar(nSvgWidth, nSvgToWidth);
 	//console.debug("nSvgToWidth:"+nSvgToWidth);
-	var jedoWorker = new Worker("jedo.JedoWorker.js");
-	jedoWorker.postMessage({
-		"cmd": "SettingBodyGanttBarData",
-		"options": this.options,
-		"startGanttDate": this.options.startGanttDate,
-		"endGanttDate": this.options.endGanttDate,
-		"nPrevWidth": nSvgWidth,
-		"nToWidth": nSvgToWidth
-	});
-	
-	jedoWorker.addEventListener("message", function(event){
-		switch(event.data.cmd) {
-		case "SettingBodyGanttBarData":
-			_oJedoGantt.setBodyGanttBar(event.data.ganttBodyBarDatas);
-			if(event.data.nPrevWidth) {
-				var oGanttContainer = $(_oJedoGantt.ganttContainer);
-				var xScroll = (event.data.nToWidth / event.data.nPrevWidth) * svgPoint.x;
-				    xScroll = xScroll - ((oGanttContainer.width()/5)*3);
-				    xScroll = xScroll < 0 ? 0 : xScroll;
-				    oGanttContainer.animate({
-				    	scrollLeft : xScroll
-				      }, 1500);
-			}
-			break;
-		} 
-	}, false);
-	console.log("e -- window.jedo.JedoGantt.prototype.changeGanttViewMode -- ");
+	if(!this.ganttBodyData) {
+		var jedoWorker = new Worker("jedo.JedoWorker.js");
+		var _oJedoGantt = this;
+		jedoWorker.addEventListener("message", function(event){
+			switch(event.data.cmd) {
+			case "SettingBodyGanttBarData":
+				_oJedoGantt.ganttBodyData = event.data.ganttBodyBarDatas;
+				_oJedoGantt.setBodyGanttBar(event.data.ganttBodyBarDatas);
+				break;
+			} 
+		}, false);
+		jedoWorker.postMessage({
+			"cmd": "SettingBodyGanttBarData",
+			"options": this.options,
+			"startGanttDate": this.options.startGanttDate,
+			"endGanttDate": this.options.endGanttDate,
+			"nPrevWidth": nSvgWidth,
+			"nToWidth": nSvgToWidth
+		});
+	} else {
+		this.setBodyGanttBar(this.ganttBodyData);
+	}
+	//console.log("e -- window.jedo.JedoGantt.prototype.changeGanttBodyViewMode -- ");
 };
 window.jedo.JedoGantt.prototype.createGanttHeader = function() {
 	//console.log("s -- window.jedo.JedoGantt.prototype.createGanttHeader -- ");
@@ -700,10 +568,8 @@ window.jedo.JedoGantt.prototype.createGanttHeader = function() {
     	_arrPromise[_arrPromise.length] = deferredDate.promise();
     }
     
-    $.when(_arrPromise[0],_arrPromise[1],_arrPromise[2]).done(function(){
-    	console.log("s -- $.when() ---------------------------------------");
+    $.when.apply($, _arrPromise).done(function(){
     	_oJedoGantt.createGanttHeaderBack();
-    	console.log("e -- $.when() ---------------------------------------");
     });
 
 	
@@ -711,7 +577,7 @@ window.jedo.JedoGantt.prototype.createGanttHeader = function() {
     //console.log("e -- window.jedo.JedoGantt.prototype.createGanttHeader -- ");
 };
 window.jedo.JedoGantt.prototype.createGanttHeaderBack = function() {
-	
+	//console.log("s -- window.jedo.JedoGantt.prototype.createGanttHeaderBack -- ");
 	this.svg.select("rect.ganttHeaderBack").remove();
 	var lH = this.options.header.lineHeight;
 	var x = (lH/5);
@@ -745,10 +611,37 @@ window.jedo.JedoGantt.prototype.createGanttHeaderBack = function() {
 	node.addEventListener("click", function(event){
 		console.log("s -- window.jedo.JedoGantt.prototype.createGanttHeaderBack.click -- ");
 		
+		
+		var oGanttContainer = $(oJedoGantt.ganttContainer);
+		var nViewWidth = oGanttContainer.width();
+		var nClientX = nViewWidth/2;
+		var scrollLeft = oGanttContainer.scrollLeft();
 		var svgPoint	= window.jedo.getSVGCursorPoint(oJedoGantt.svg, event);
-		oJedoGantt.changeGanttViewMode(svgPoint, oJedoGantt.dateViewMode-1);
+		
+		var nSTime = oJedoGantt.options.startGanttDate.getTime();
+		var nETime = oJedoGantt.options.endGanttDate.getTime();
+		var nWTime = nETime - nSTime;
+		var nFWidth = oJedoGantt.svg.attr("width");
+		var nTime = (nWTime/nFWidth)*(svgPoint.x);
+		
+		var oClickDate = new Date(nSTime+nTime);
+		
+		var svgPoint	= window.jedo.getSVGCursorPoint(oJedoGantt.svg, event);
+		oJedoGantt.changeGanttViewMode(svgPoint,  window.jedo.getZoomOutViewMode(oJedoGantt.dateViewMode));
+		
+
+		var nSvgToWidth = oJedoGantt.svg.attr("width");
+		var nToTimePx = oJedoGantt.fnScale(oClickDate);
+		var nTScroll = nToTimePx-nClientX;
+		
+	    oGanttContainer.animate({
+	    	scrollLeft : nTScroll
+	      }, 2000);
+		
+		
 		console.log("e -- window.jedo.JedoGantt.prototype.createGanttHeaderBack.click -- ");
 	},false);
+	//console.log("e -- window.jedo.JedoGantt.prototype.createGanttHeaderBack -- ");
 };
 window.jedo.JedoGantt.prototype.createGanttBody = function() {
 	//console.log("s -- window.jedo.JedoGantt.prototype.createGanttBody -- ");
@@ -804,14 +697,14 @@ window.jedo.JedoGantt.prototype.setBodyGanttBar = function(arr) {
 			.each(function(){
 				this.addEventListener("mouseover", oJedoGantt.mouseOverBar.bind(oJedoGantt), false);
 				//this.addEventListener("mouseout",  oJedoGantt.mouseOutBar.bind(oJedoGantt),  false);
-				this.addEventListener("mousedown", oJedoGantt.mouseDownBar.bind(oJedoGantt), false);
+				this.addEventListener("mousedown", oJedoGantt.mouseDownGanttBar.bind(oJedoGantt), false);
 			});
 	}
 	//console.log("e -- window.jedo.JedoGantt.prototype.setBodyGanttBar  --");
 };
 window.jedo.JedoGantt.prototype.setHeaderLineMode = function(indexLine, lineMode, arr) {
 	//console.log("s -- window.jedo.JedoGantt.prototype.setHeaderLineMode  --");
-	console.log("indexLine:"+indexLine+" lineMode:"+window.jedo.getViewModeString(lineMode));
+	//console.log("indexLine:"+indexLine+" lineMode:"+window.jedo.getViewModeString(lineMode));
 	this.svg.selectAll('rect.rectheaderLine'+indexLine).remove();
 	this.svg.selectAll('text.textheaderLine'+indexLine).remove();
 	
@@ -844,17 +737,6 @@ window.jedo.JedoGantt.prototype.setHeaderLineMode = function(indexLine, lineMode
 		});
 	//console.log("e -- window.jedo.JedoGantt.prototype.setHeaderLineMode  --");
 };
-window.jedo.JedoGantt.prototype.getMarkPoints = function(iX, iY, iW, iH) {
-	var mH = (iH/5)*3;
-	var mT = iH/3;
-	//console.log("iX:%i, iY:%i, iW:%i, iH:%i ",iX, iY, iW, iH);
-	return [ { "x": iX-mT,  "y": iY},  
-             { "x": iX+mT,  "y": iY},
-             { "x": iX+mT,  "y": iY+mH}, 
-             { "x": iX,  	"y": iY+iH},
-             { "x": iX-mT,  "y": iY+mH}
-           ];
-};
 window.jedo.JedoGantt.prototype.mouseOverBar = function(event) {
 //	console.log("s -- window.jedo.JedoGantt.prototype.mouseOverBar  --");
 //	console.debug("id:"+event.target.getAttribute("id"));
@@ -876,16 +758,18 @@ window.jedo.JedoGantt.prototype.mouseOverBar = function(event) {
 //	d3.select(event.target).style({'cursor':'default'});
 //	console.log("e -- window.jedo.JedoGantt.prototype.mouseOutBar  --");
 //};
-window.jedo.JedoGantt.prototype.mouseDownBar = function(event) {
-//	console.log("s -- window.jedo.JedoGantt.prototype.mouseDownBar  --");
+window.jedo.JedoGantt.prototype.mouseDownGanttBar = function(event) {
+//	console.log("s -- window.jedo.JedoGantt.prototype.mouseDownGanttBar  --");
 //	console.log("event.type:"+event.type+" clientX:"+event.clientX+" x:"+event.x+" clientY:"+event.clientY+" y:"+event.y);
 //	
 	this.clearCapturedGanttBar();
 	
 	var oTarget = d3.select(event.target);
 	var sDataID = oTarget.attr("dataID");
-	
+	var dataIndex = oTarget.attr("dataIndex");
 	var gGanttBar = d3.select("#gGanttBar_"+sDataID);
+	
+	con            sole.log("dataIndex:"+dataIndex);
 	
 	var sClass = event.target.getAttribute("class");
 	if(sClass == "startMarkGanttBar") {
@@ -906,7 +790,7 @@ window.jedo.JedoGantt.prototype.mouseDownBar = function(event) {
 	});
 	this.capturedDataID = sDataID;
 	
-//	console.log("e -- window.jedo.JedoGantt.prototype.mouseDownBar  --");
+//	console.log("e -- window.jedo.JedoGantt.prototype.mouseDownGanttBar  --");
 };
 window.jedo.JedoGantt.prototype.mouseUpBar = function(event) {
 //	console.log("s -- window.jedo.JedoGantt.prototype.mouseUpBar  --");
@@ -950,7 +834,7 @@ window.jedo.JedoGantt.prototype.mouseMoveBar = function(event) {
 			w1 = w1 < this.options.unitSpace ? this.options.unitSpace : w1;
 			oRectGanttBar.attr("width", w1);
 			//console.log("svgPoint.x:i%, yRectGanttBar:i%, wRectGanttBar:i%, nGanttBarHeight:i%", svgPoint.x, yRectGanttBar, wRectGanttBar, nGanttBarHeight);
-			var polyData = this.getMarkPoints(svgPoint.x, yRectGanttBar, wRectGanttBar, nGanttBarHeight);
+			var polyData = window.jedo.getMarkPoints(svgPoint.x, yRectGanttBar, wRectGanttBar, nGanttBarHeight);
 			//console.log("polyData:"+polyData);
 			oEndMarkGanttBar.attr("points",function(d) { 
 	    		return polyData.map(function(d){ 
@@ -961,10 +845,34 @@ window.jedo.JedoGantt.prototype.mouseMoveBar = function(event) {
 	//console.log("e -- window.jedo.JedoGantt.prototype.mouseMoveBar  --");
 };
 window.jedo.JedoGantt.prototype.onHeaderMouseUp = function(event) {
-//	console.log("s -- window.jedo.JedoGantt.prototype.onHeaderMouseUp  --");
+	console.log("s -- window.jedo.JedoGantt.prototype.onHeaderMouseUp  --");
+	
+	var oGanttContainer = $(this.ganttContainer);
+	var nViewWidth = oGanttContainer.width();
+	var nClientX = event.clientX;
+	var scrollLeft = oGanttContainer.scrollLeft();
 	var svgPoint	= window.jedo.getSVGCursorPoint(this.svg, event);
-	this.changeGanttViewMode(svgPoint, this.dateViewMode+1);
-//	console.log("e -- window.jedo.JedoGantt.prototype.onHeaderMouseUp  --");
+	
+	var nSTime = this.options.startGanttDate.getTime();
+	var nETime = this.options.endGanttDate.getTime();
+	var nWTime = nETime - nSTime;
+	var nFWidth = this.svg.attr("width");
+	var nTime = (nWTime/nFWidth)*(svgPoint.x);
+	
+	var oClickDate = new Date(nSTime+nTime);
+
+	
+	this.changeGanttViewMode(svgPoint, window.jedo.getZoomInViewMode(this.dateViewMode));
+
+	var nSvgToWidth = this.svg.attr("width");
+	var nToTimePx = this.fnScale(oClickDate);
+	var nTScroll = nToTimePx-nClientX;
+	
+    oGanttContainer.animate({
+    	scrollLeft : nTScroll
+      }, 2000);
+	
+	console.log("e -- window.jedo.JedoGantt.prototype.onHeaderMouseUp  --");
 };
 
 
