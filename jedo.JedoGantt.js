@@ -19,7 +19,7 @@ if(typeof(Worker) === "undefined") {
 
 if(!window.jedo.hasOwnProperty("JedoGantt")) {
 	
-window.jedo.JedoGantt = function (options, ganttContainer, svg) {
+window.jedo.JedoGantt = function (options, ganttContainer) {
 	
 	Object.defineProperty(this, "options", {
 		get: function() {
@@ -37,13 +37,15 @@ window.jedo.JedoGantt = function (options, ganttContainer, svg) {
 		configurable: false
 	});
 	
-	Object.defineProperty(this, "svg", {
+	
+	Object.defineProperty(this, "snapSvg", {
 		get: function() {
-			return svg;
+			return Snap("#"+$(this.ganttContainer).attr("id")+"_SVG");
 		},
 		enumerable: false,
 		configurable: false
 	});
+	
 	
 	// -------------------------------------------------------------------------------------//
 	var _ganttViewMode = [];
@@ -213,14 +215,15 @@ window.jedo.JedoGantt = function (options, ganttContainer, svg) {
 	
 	var _clearCapturedGanttBar = function() {
 		if(this.capturedDataID) {
-			d3.selectAll("#rectGanttBar_"+this.capturedDataID+", #startMarkGanttBar_"+this.capturedDataID+", #endMarkGanttBar_"+this.capturedDataID)
-				.each(function(){
-					d3.select(this).style({'cursor':'default'});
-					if(this.getAttribute("class") == "rectGanttBar") {
-						d3.select(this).style({'stroke-width':0});
-					} else {
-						d3.select(this).style({'stroke-width':1});
-					}
+			Snap.select("#rectGanttBar_"+this.capturedDataID)
+				.attr({	
+					'cursor':'default',
+					'stroke-width':0
+				});
+			Snap.selectAll("#startMarkGanttBar_"+this.capturedDataID+", #endMarkGanttBar_"+this.capturedDataID)
+				.attr({	
+					'cursor':'default',
+					'stroke-width':1
 				});
 		}
 		this.capturedMode = null; 
@@ -236,61 +239,19 @@ window.jedo.JedoGantt = function (options, ganttContainer, svg) {
 };
 window.jedo.JedoGantt.prototype.initJedoGantt = function(nSvgWidth) {
 	//console.log("s -- window.jedo.JedoGantt.prototype.initJedoGantt -- ");
-	var defs = this.svg.append("defs");
-    var headerGradient = defs.append("linearGradient")
-		 	.attr("id", "headerGradient")
-		 	.attr("x1", "0%")
-		 	.attr("y1", "0%")
-		 	.attr("x2", "0%")
-		 	.attr("y2", "100%")
-		 	.attr("spreadMethod", "pad");
-    headerGradient.append("stop")
-			.attr("offset", "0%")
-			.attr("stop-color", "#F5F5F5")
-			.attr("stop-opacity", 1);
-    headerGradient.append("stop")
-			.attr("offset", "100%")
-			.attr("stop-color", "#DCDCDC")
-			.attr("stop-opacity", 1);
 	
-    var ganttBarGradient = defs.append("linearGradient")
-		 	.attr("id", "ganttBarGradient")
-		 	.attr("x1", "0%")
-		 	.attr("y1", "0%")
-		 	.attr("x2", "0%")
-		 	.attr("y2", "100%")
-		 	.attr("spreadMethod", "pad");
-    ganttBarGradient.append("stop")
-			.attr("offset", "0%")
-			.attr("stop-color", "#DCDCDC")
-			.attr("stop-opacity", 1);
-    ganttBarGradient.append("stop")
-			.attr("offset", "100%")
-			.attr("stop-color", "#2F4F4F")
-			.attr("stop-opacity", 1);
-    
-    var ganttMarkGradient = defs.append("linearGradient")
-		 	.attr("id", "ganttMarkGradient")
-		 	.attr("x1", "0%")
-		 	.attr("y1", "0%")
-		 	.attr("x2", "0%")
-		 	.attr("y2", "100%")
-		 	.attr("spreadMethod", "pad");
-    ganttMarkGradient.append("stop")
-			.attr("offset", "0%")
-			.attr("stop-color", "#DCDCDC")
-			.attr("stop-opacity", 1);
-    ganttMarkGradient.append("stop")
-			.attr("offset", "100%")
-			.attr("stop-color", "#2F4F4F")
-			.attr("stop-opacity", 1);
-
+	var headerGradient = this.snapSvg.gradient("l(0, 0, 1, 1)#F5F5F5-#DCDCDC");
+	headerGradient.attr({'id':'headerGradient'}).toDefs();
+	var ganttBarGradient = this.snapSvg.gradient("l(0, 0, 1, 1)#DCDCDC-#2F4F4F");
+	ganttBarGradient.attr({'id':'ganttBarGradient'}).toDefs();
+	var ganttMarkGradient = this.snapSvg.gradient("l(0, 0, 1, 1)#DCDCDC-#2F4F4F");
+	ganttMarkGradient.attr({'id':'ganttMarkGradient'}).toDefs();
     var oFnScale = window.jedo.getFnScale(this.options.startGanttDate, this.options.endGanttDate, 0, nSvgWidth);
     var nDateViewMode = window.jedo.getDateViewMode(this.options, oFnScale);
-    //console.log("sDateViewMode:"+window.jedo.getViewModeString(nDateViewMode));
+
     this.setSettingGanttData(nDateViewMode, 
     		new window.jedo.SettingGanttData(nDateViewMode, nSvgWidth, oFnScale));
-    //console.log("this.dateViewMode:"+window.jedo.getViewModeString(this.dateViewMode));
+
 	this.createGanttBody();
 	this.createGanttHeader();
 	
@@ -303,7 +264,7 @@ window.jedo.JedoGantt.prototype.changeGanttViewMode = function(svgPoint, nDateVi
 	//console.log("now this.dateViewMode:"+window.jedo.getViewModeString(this.dateViewMode));
 	
 	var nSvgToWidth = 0;
-	var nSvgWidth = this.svg.attr("width");
+	var nSvgWidth = this.snapSvg.attr("width");
 	if(window.jedo.DATE < nDateViewMode) {
 		console.debug("nHeaderDateViewMode["+nDateViewMode+"] is bad");
 		return;
@@ -315,7 +276,7 @@ window.jedo.JedoGantt.prototype.changeGanttViewMode = function(svgPoint, nDateVi
 	
 	var bDataViewMode = this.isDateViewMode(nDateViewMode);
 	if(!bDataViewMode) {
-		nSvgToWidth = window.jedo.getChangeSvgWidth(nDateViewMode, this.fnScale, this.options, this.svg);
+		nSvgToWidth = window.jedo.getChangeSvgWidth(nDateViewMode, this.fnScale, this.options, this.snapSvg);
 		var oFnScale = window.jedo.getFnScale(this.options.startGanttDate, this.options.endGanttDate, 0, nSvgToWidth);
 		this.setSettingGanttData(nDateViewMode, 
 	    		new window.jedo.SettingGanttData(nDateViewMode, nSvgToWidth, oFnScale));
@@ -325,10 +286,10 @@ window.jedo.JedoGantt.prototype.changeGanttViewMode = function(svgPoint, nDateVi
 		nSvgToWidth = this.dateViewModeSvgWidth;
 	}
 	
-	this.svg.attr("width", nSvgToWidth);
+	this.snapSvg.attr("width", nSvgToWidth);
 	
-	this.svg.select('rect.ganttHeaderBg').attr('width', nSvgToWidth);
-	this.svg.select('rect.ganttBodyBg').attr('width', nSvgToWidth);
+	this.snapSvg.select('rect.ganttHeaderBg').attr('width', nSvgToWidth);
+	this.snapSvg.select('rect.ganttBodyBg').attr('width', nSvgToWidth);
 	
 	this.changeGanttHeaderViewMode(svgPoint, nSvgWidth, nSvgToWidth);
 	this.changeGanttBodyViewMode(svgPoint, nSvgWidth, nSvgToWidth);
@@ -416,21 +377,16 @@ window.jedo.JedoGantt.prototype.changeGanttBodyViewMode = function(svgPoint, nSv
 window.jedo.JedoGantt.prototype.createGanttHeader = function() {
 	//console.log("s -- window.jedo.JedoGantt.prototype.createGanttHeader -- ");
 	
-	var nSvgWidth = this.svg.attr("width");
+	var nSvgWidth = this.snapSvg.attr("width");
 	var nSvgHeaderHeight = this.options.header.lineHeight*this.options.header.viewLineCount;
-	
-	var ganttHeader = this.svg.append('g').attr('class', 'ganttHeader');
-	ganttHeader.append('rect')
-				.attr('class', 'ganttHeaderBg')
-				.attr('x', 1)
-				.attr('y', 1)
-				.attr('width', nSvgWidth)
-				.attr('height', nSvgHeaderHeight)
-				.style({
-					'fill': 'black',
-				    'stroke': 'navy',
-				    'stroke-width': 0
-				});
+
+	var r = this.snapSvg.rect(1,1,nSvgWidth,nSvgHeaderHeight).attr({
+		'class': 'ganttHeaderBg',
+		'fill': 'black',
+	    'stroke': 'navy',
+	    'stroke-width': 0
+	});
+	var ganttHeader = this.snapSvg.group(r).attr('class', 'ganttHeader');
 	
 	var _oJedoGantt = this;
 	var _arrPromise = [];
@@ -578,32 +534,28 @@ window.jedo.JedoGantt.prototype.createGanttHeader = function() {
 };
 window.jedo.JedoGantt.prototype.createGanttHeaderBack = function() {
 	//console.log("s -- window.jedo.JedoGantt.prototype.createGanttHeaderBack -- ");
-	this.svg.select("rect.ganttHeaderBack").remove();
+	Snap.selectAll("rect.ganttHeaderBack").remove();
 	var lH = this.options.header.lineHeight;
 	var x = (lH/5);
 	var y = (lH/5);
 	var w = (lH/5)*3;
 	var h = (lH/5)*3;
-	var ganttHeader = this.svg.select("g.ganttHeader");
-	ganttHeader.append('rect')
-				.attr('class', 'ganttHeaderBack')
-				.attr('x', x)
-				.attr('y', y)
-				.attr('width', w)
-				.attr('height', h)
-				.style({
-					'fill': 'black',
-				    'stroke': 'navy',
-				    'stroke-width': 0
-				});
-	var node = this.svg.select("rect.ganttHeaderBack").node();
+	var ganttHeader = Snap("g.ganttHeader");
+	var r = ganttHeader.rect(x,y,w,h).attr({
+		'class': 'ganttHeaderBack',
+		'fill': 'black',
+	    'stroke': 'navy',
+	    'stroke-width': 0
+	});
+	//ganttHeader.append(r);
+	var node = Snap.select("rect.ganttHeaderBack").node;
 	node.addEventListener("mouseover", function(event){
-		d3.select(this).style({
+		Snap(this).attr({
 		    'stroke-width': 1
 		});
 	},false);
 	node.addEventListener("mouseout", function(event){
-		d3.select(this).style({
+		Snap(this).attr({
 		    'stroke-width': 0
 		});
 	},false);
@@ -616,21 +568,21 @@ window.jedo.JedoGantt.prototype.createGanttHeaderBack = function() {
 		var nViewWidth = oGanttContainer.width();
 		var nClientX = nViewWidth/2;
 		var scrollLeft = oGanttContainer.scrollLeft();
-		var svgPoint	= window.jedo.getSVGCursorPoint(oJedoGantt.svg, event);
+		var svgPoint	= window.jedo.getSVGCursorPoint(this.snapSvg.node, event);
 		
 		var nSTime = oJedoGantt.options.startGanttDate.getTime();
 		var nETime = oJedoGantt.options.endGanttDate.getTime();
 		var nWTime = nETime - nSTime;
-		var nFWidth = oJedoGantt.svg.attr("width");
+		var nFWidth = oJedoGantt.snapSvg.attr("width");
 		var nTime = (nWTime/nFWidth)*(svgPoint.x);
 		
 		var oClickDate = new Date(nSTime+nTime);
 		
-		var svgPoint	= window.jedo.getSVGCursorPoint(oJedoGantt.svg, event);
+		var svgPoint	= window.jedo.getSVGCursorPoint(this.snapSvg.node, event);
 		oJedoGantt.changeGanttViewMode(svgPoint,  window.jedo.getZoomOutViewMode(oJedoGantt.dateViewMode));
 		
 
-		var nSvgToWidth = oJedoGantt.svg.attr("width");
+		var nSvgToWidth = oJedoGantt.snapSvg.attr("width");
 		var nToTimePx = oJedoGantt.fnScale(oClickDate);
 		var nTScroll = nToTimePx-nClientX;
 		
@@ -647,23 +599,19 @@ window.jedo.JedoGantt.prototype.createGanttBody = function() {
 	//console.log("s -- window.jedo.JedoGantt.prototype.createGanttBody -- ");
 	
 	var options = this.options;
-	var nSvgWidth = this.svg.attr('width');
-	var nSvgHeight = this.svg.attr('height');
+	var nSvgWidth = this.snapSvg.attr('width');
+	var nSvgHeight = this.snapSvg.attr('height');
 	var nSvgHeaderHeight = options.header.lineHeight*options.header.viewLineCount;
 	var nSvgBodyHeight = options.lineHeight*options.ganttData.length;
 	
-	var ganttBody = this.svg.append('g').attr('class', 'ganttBody');
-	ganttBody.append('rect')
-		.attr('class', 'ganttBodyBg')
-		.attr('x', 1)
-		.attr('y', nSvgHeaderHeight+1)
-		.attr('width', nSvgWidth)
-		.attr('height', nSvgBodyHeight)
-		.style({
-			'fill': 'red',
-		    'stroke': 'navy',
-		    'stroke-width': 0
-		});
+	var ganttBody = this.snapSvg.rect(1, nSvgHeaderHeight+1, nSvgWidth, nSvgBodyHeight).attr({
+		'class': 'ganttBodyBg',
+		'fill': 'red',
+	    'stroke': 'navy',
+	    'stroke-width': 0
+	});
+	this.snapSvg.group(ganttBody).attr({'class': 'ganttBody'});
+	
 	//this.setBodyGanttBar(null, nSvgWidth);
 
 	var jedoWorker = new Worker("jedo.JedoWorker.js");
@@ -689,15 +637,15 @@ window.jedo.JedoGantt.prototype.createGanttBody = function() {
 window.jedo.JedoGantt.prototype.setBodyGanttBar = function(arr) {
 	//console.log("s -- window.jedo.JedoGantt.prototype.setBodyGanttBar  --");
 	var iX = this.fnScale(this.options.endGanttDate, window.jedo.DATE_SCALE_TYPE_END);
-	window.jedo.setGanttBodyLine(this.svg.select('g.ganttBody'), this.fnPrevScale, arr, iX);
-	window.jedo.setGanttBodyBar(this.svg.select('g.ganttBody'), this.fnPrevScale, arr, iX, this);
+	window.jedo.setGanttBodyLine(this.snapSvg.select('g.ganttBody'), this.fnPrevScale, arr, iX);
+	window.jedo.setGanttBodyBar(this.snapSvg.select('g.ganttBody'), this.fnPrevScale, arr, iX, this);
 	if(!this.fnPrevScale) {
 		var oJedoGantt = this;
-		this.svg.select('g.ganttBody').selectAll("rect.rectGanttBar, polygon.startMarkGanttBar, polygon.endMarkGanttBar")
-			.each(function(){
-				this.addEventListener("mouseover", oJedoGantt.mouseOverBar.bind(oJedoGantt), false);
+		Snap.selectAll("rect.rectGanttBar, polygon.startMarkGanttBar, polygon.endMarkGanttBar")
+			.forEach(function(elem, i){
+				elem.node.addEventListener("mouseover", oJedoGantt.mouseOverBar.bind(oJedoGantt), false);
 				//this.addEventListener("mouseout",  oJedoGantt.mouseOutBar.bind(oJedoGantt),  false);
-				this.addEventListener("mousedown", oJedoGantt.mouseDownGanttBar.bind(oJedoGantt), false);
+				elem.node.addEventListener("mousedown", oJedoGantt.mouseDownGanttBar.bind(oJedoGantt), false);
 			});
 	}
 	//console.log("e -- window.jedo.JedoGantt.prototype.setBodyGanttBar  --");
@@ -705,34 +653,34 @@ window.jedo.JedoGantt.prototype.setBodyGanttBar = function(arr) {
 window.jedo.JedoGantt.prototype.setHeaderLineMode = function(indexLine, lineMode, arr) {
 	//console.log("s -- window.jedo.JedoGantt.prototype.setHeaderLineMode  --");
 	//console.log("indexLine:"+indexLine+" lineMode:"+window.jedo.getViewModeString(lineMode));
-	this.svg.selectAll('rect.rectheaderLine'+indexLine).remove();
-	this.svg.selectAll('text.textheaderLine'+indexLine).remove();
+	Snap.selectAll('rect.rectheaderLine'+indexLine).remove();
+	Snap.selectAll('text.textheaderLine'+indexLine).remove();
 	
 	if(this.fnPrevScale) {
 		
-		window.jedo.createRectHeaderLineTransition(this.svg.select("g.ganttHeader"), indexLine, lineMode, arr);
-		window.jedo.createTextHeaderLineTransition(this.svg.select("g.ganttHeader"), indexLine, lineMode, arr, this.options);
+		window.jedo.createRectHeaderLineTransition(this.snapSvg.select("g.ganttHeader"), indexLine, lineMode, arr);
+		window.jedo.createTextHeaderLineTransition(this.snapSvg.select("g.ganttHeader"), indexLine, lineMode, arr, this.options);
 		
 	} else {
 		
-		window.jedo.createRectHeaderLine(this.svg.select("g.ganttHeader"), indexLine, lineMode, arr);
-		window.jedo.createTextHeaderLine(this.svg.select("g.ganttHeader"), indexLine, lineMode, arr, this.options);
+		window.jedo.createRectHeaderLine(this.snapSvg.select("g.ganttHeader"), indexLine, lineMode, arr);
+		window.jedo.createTextHeaderLine(this.snapSvg.select("g.ganttHeader"), indexLine, lineMode, arr, this.options);
 	}
 	
 	var oJedoGant = this;
 	var options = this.options;
-	this.svg.selectAll('rect.rectheaderLine'+indexLine+', text.textheaderLine'+indexLine)
-		.each(function(){
+	Snap.selectAll('rect.rectheaderLine'+indexLine+', text.textheaderLine'+indexLine)
+		.forEach(function(elem, i){
 			if(indexLine+1 === options.header.viewLineCount) {
-				this.addEventListener("mouseup", oJedoGant.onHeaderMouseUp.bind(oJedoGant),false);
+				elem.node.addEventListener("mouseup", oJedoGant.onHeaderMouseUp.bind(oJedoGant),false);
 			} 
-			this.addEventListener("mouseover", function(event){
+			elem.node.addEventListener("mouseover", function(event){
 				var sDataID = event.target.getAttribute("dataID");
-				d3.select(this).style({'stroke-width':2});
+				Snap(this).attr({'stroke-width':2});
 			},false);
-			this.addEventListener("mouseout", function(event){
+			elem.node.addEventListener("mouseout", function(event){
 				var sDataID = event.target.getAttribute("dataID");
-				d3.select(this).style({'stroke-width':0});
+				Snap(this).attr({'stroke-width':0});
 			},false);
 		});
 	//console.log("e -- window.jedo.JedoGantt.prototype.setHeaderLineMode  --");
@@ -744,13 +692,14 @@ window.jedo.JedoGantt.prototype.mouseOverBar = function(event) {
 	
 	var sDataID = event.target.getAttribute("dataID");
 	//console.debug("dataID:"+event.target.getAttribute("dataID"));
-	d3.selectAll("#rectGanttBar_"+sDataID+", #startMarkGanttBar_"+sDataID+", #endMarkGanttBar_"+sDataID).each(function(){
-		if(this.getAttribute("class") == "rectGanttBar") {
-			d3.select(this).style({'cursor':'pointer'});
-		} else {
-			d3.select(this).style({'cursor':'col-resize'});
-		}
-	});
+	Snap.select("#rectGanttBar_"+sDataID)
+		.attr({
+			'cursor':'pointer'
+		});
+	Snap.selectAll("#startMarkGanttBar_"+sDataID+", #endMarkGanttBar_"+sDataID)
+		.attr({
+			'cursor':'col-resize'
+		});
 //	console.log("e -- window.jedo.JedoGantt.prototype.mouseOverBar  --");
 };
 //window.jedo.JedoGantt.prototype.mouseOutBar = function(event) {
@@ -764,12 +713,12 @@ window.jedo.JedoGantt.prototype.mouseDownGanttBar = function(event) {
 //	
 	this.clearCapturedGanttBar();
 	
-	var oTarget = d3.select(event.target);
+	var oTarget = Snap(event.target);
 	var sDataID = oTarget.attr("dataID");
 	var dataIndex = oTarget.attr("dataIndex");
-	var gGanttBar = d3.select("#gGanttBar_"+sDataID);
+	var gGanttBar = Snap.select("#gGanttBar_"+sDataID);
 	
-	con            sole.log("dataIndex:"+dataIndex);
+	console.log("dataIndex:"+dataIndex);
 	
 	var sClass = event.target.getAttribute("class");
 	if(sClass == "startMarkGanttBar") {
@@ -785,9 +734,8 @@ window.jedo.JedoGantt.prototype.mouseDownGanttBar = function(event) {
 	} else {
 		throw new TypeError("event.target class["+sClass+"] is bad");
 	}
-	d3.selectAll("#rectGanttBar_"+sDataID+", #startMarkGanttBar_"+sDataID+", #endMarkGanttBar_"+sDataID).each(function(){
-		d3.select(this).style({'stroke-width':2});
-	});
+	Snap.selectAll("#rectGanttBar_"+sDataID+", #startMarkGanttBar_"+sDataID+", #endMarkGanttBar_"+sDataID)
+		.attr({'stroke-width':2});
 	this.capturedDataID = sDataID;
 	
 //	console.log("e -- window.jedo.JedoGantt.prototype.mouseDownGanttBar  --");
@@ -803,13 +751,13 @@ window.jedo.JedoGantt.prototype.mouseMoveBar = function(event) {
 	//console.debug("which:"+event.which);
 	
 	if(this.capturedDataID) {
-		var svgPoint = window.jedo.getSVGCursorPoint(this.svg, event);
+		var svgPoint = window.jedo.getSVGCursorPoint(this.snapSvg.node, event);
 	    //console.debug("svg mouse at"+ " x:" + svgPoint.x +" y:" +svgPoint.y);
 	    
-		var gGanttBar = d3.select("#gGanttBar_"+this.capturedDataID);
-		var oRectGanttBar = d3.select("#rectGanttBar_"+this.capturedDataID);
-		var oStartMarkGanttBar = d3.select("#startMarkGanttBar_"+this.capturedDataID);
-		var oEndMarkGanttBar = d3.select("#endMarkGanttBar_"+this.capturedDataID);
+		var gGanttBar = Snap.select("#gGanttBar_"+this.capturedDataID);
+		var oRectGanttBar = Snap.select("#rectGanttBar_"+this.capturedDataID);
+		var oStartMarkGanttBar = Snap.select("#startMarkGanttBar_"+this.capturedDataID);
+		var oEndMarkGanttBar = Snap.select("#endMarkGanttBar_"+this.capturedDataID);
 		
 		var xRectGanttBar = oRectGanttBar.attr("x");
 		var yRectGanttBar = oRectGanttBar.attr("y");
@@ -832,14 +780,16 @@ window.jedo.JedoGantt.prototype.mouseMoveBar = function(event) {
 			
 			var w1 = parseInt(svgPoint.x) - xRectGanttBar;
 			w1 = w1 < this.options.unitSpace ? this.options.unitSpace : w1;
-			oRectGanttBar.attr("width", w1);
+			oRectGanttBar.attr({
+				"width": w1
+			});
 			//console.log("svgPoint.x:i%, yRectGanttBar:i%, wRectGanttBar:i%, nGanttBarHeight:i%", svgPoint.x, yRectGanttBar, wRectGanttBar, nGanttBarHeight);
 			var polyData = window.jedo.getMarkPoints(svgPoint.x, yRectGanttBar, wRectGanttBar, nGanttBarHeight);
-			//console.log("polyData:"+polyData);
-			oEndMarkGanttBar.attr("points",function(d) { 
-	    		return polyData.map(function(d){ 
-	    			return [d.x,d.y].join(",");}).join(" "); 
-	    	});
+			var s = polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" ");
+			//console.log("polyData:"+s);
+			oEndMarkGanttBar.attr({
+				"points": s
+			});
 		}
 	}
 	//console.log("e -- window.jedo.JedoGantt.prototype.mouseMoveBar  --");
@@ -851,12 +801,12 @@ window.jedo.JedoGantt.prototype.onHeaderMouseUp = function(event) {
 	var nViewWidth = oGanttContainer.width();
 	var nClientX = event.clientX;
 	var scrollLeft = oGanttContainer.scrollLeft();
-	var svgPoint	= window.jedo.getSVGCursorPoint(this.svg, event);
+	var svgPoint	= window.jedo.getSVGCursorPoint(this.snapSvg.node, event);
 	
 	var nSTime = this.options.startGanttDate.getTime();
 	var nETime = this.options.endGanttDate.getTime();
 	var nWTime = nETime - nSTime;
-	var nFWidth = this.svg.attr("width");
+	var nFWidth = this.snapSvg.attr("width");
 	var nTime = (nWTime/nFWidth)*(svgPoint.x);
 	
 	var oClickDate = new Date(nSTime+nTime);
@@ -864,13 +814,13 @@ window.jedo.JedoGantt.prototype.onHeaderMouseUp = function(event) {
 	
 	this.changeGanttViewMode(svgPoint, window.jedo.getZoomInViewMode(this.dateViewMode));
 
-	var nSvgToWidth = this.svg.attr("width");
+	var nSvgToWidth = this.snapSvg.attr("width");
 	var nToTimePx = this.fnScale(oClickDate);
 	var nTScroll = nToTimePx-nClientX;
-	
-    oGanttContainer.animate({
-    	scrollLeft : nTScroll
-      }, 2000);
+//	
+//    oGanttContainer.animate({
+//    	scrollLeft : nTScroll
+//      }, 2000);
 	
 	console.log("e -- window.jedo.JedoGantt.prototype.onHeaderMouseUp  --");
 };

@@ -82,18 +82,22 @@
 		oGanttContainer.height(document.documentElement.clientHeight - 5);
 
 		var nWidth = oGanttContainer.width()-17;
-		var svg = d3.select("#"+oGanttContainer.attr("id")).append("svg")
-					.attr("width", nWidth)
-					.attr("height", (options.ganttData.length+options.header.viewLineCount)*options.lineHeight);
-		var oJedoGantt = new window.jedo.JedoGantt(options, this, svg);
+		var svg = Snap(nWidth, (options.ganttData.length+options.header.viewLineCount)*options.lineHeight).attr({
+			id: oGanttContainer.attr("id")+"_SVG"
+		});
+		oGanttContainer.append(svg.node);
+		
+		var oJedoGantt = new window.jedo.JedoGantt(options, this);
 		oJedoGantt.initJedoGantt(nWidth);
 		oGanttContainer.on("scroll", function(event){
-			svg.select('g.ganttHeader').attr('transform', 'translate(0,'+$(this).scrollTop()+')');
-			svg.select('rect.ganttHeaderBack').attr('transform', 'translate('+$(this).scrollLeft()+',0)');
+			svg.select('g.ganttHeader').transform('T0,'+$(this).scrollTop());
+			svg.select('rect.ganttHeaderBack').transform('T'+$(this).scrollLeft()+',0');
 		});
 		
-		svg.node().addEventListener("mousemove",oJedoGantt.mouseMoveBar.bind(oJedoGantt),false);
-		svg.node().addEventListener("mouseup",  oJedoGantt.mouseUpBar.bind(oJedoGantt),  false);
+		svg.node.addEventListener("mousemove",oJedoGantt.mouseMoveBar.bind(oJedoGantt),false);
+		svg.node.addEventListener("mouseup",  oJedoGantt.mouseUpBar.bind(oJedoGantt),  false);
+		
+
 	};
 })(jQuery);
 

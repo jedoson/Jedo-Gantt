@@ -156,21 +156,18 @@ window.jedo.getFnScale = function(oSDate, oEDate, nSpx, nEpx) {
 	var nETime = oEDate.getTime();
 	var nTime = nETime - nSTime;
 	var nPx = nEpx - nSpx;
-	var x = d3.scale.linear()
-					.domain([nSTime, nETime])
-					.range([nSpx, nEpx]);
 	return function (oDate, pDateScaleType){
-		return x(oDate.getTime());
+		return (oDate.getTime()*nPx)/nTime;
 	};
 };
 window.jedo.getTime = function(oSDate, oEDate, nSpx, nEpx, xClient) {
 	return ((oEDate.getTime()-oSDate.getTime())/(nEpx-nSpx))*xClient;
 };
-window.jedo.getSVGCursorPoint = function(svg, event) {
-	var pt = svg.node().createSVGPoint();
+window.jedo.getSVGCursorPoint = function(svgNode, event) {
+	var pt = svgNode.createSVGPoint();
 	pt.x = event.clientX; 
 	pt.y = event.clientY;
-    var a = svg.node().getScreenCTM();
+    var a = svgNode.getScreenCTM();
     //console.debug("offset based on svg"+ " x:" + a.e +" y:" + a.f);
     var b = a.inverse();
     return pt.matrixTransform(b);
@@ -179,43 +176,93 @@ window.jedo.getMarkPoints = function(iX, iY, iW, iH) {
 	var mH = (iH/5)*3;
 	var mT = iH/3;
 	//console.log("iX:%i, iY:%i, iW:%i, iH:%i ",iX, iY, iW, iH);
-	return [ { "x": iX-mT,  "y": iY},  
-             { "x": iX+mT,  "y": iY},
-             { "x": iX+mT,  "y": iY+mH}, 
-             { "x": iX,  	"y": iY+iH},
-             { "x": iX-mT,  "y": iY+mH}
+	return [ { "x": parseInt(iX-mT,10), "y": parseInt(iY,10)},  
+             { "x": parseInt(iX+mT,10), "y": parseInt(iY,10)},
+             { "x": parseInt(iX+mT,10), "y": parseInt(iY+mH,10)}, 
+             { "x": parseInt(iX,10),  	"y": parseInt(iY+iH,10)},
+             { "x": parseInt(iX-mT,10),	"y": parseInt(iY+mH,10)}
+           ];
+};
+window.jedo.getMarkPointsArr = function(iX, iY, iW, iH) {
+	var mH = (iH/5)*3;
+	var mT = iH/3;
+	//console.log("iX:%i, iY:%i, iW:%i, iH:%i ",iX, iY, iW, iH);
+	return [ parseInt(iX-mT,10), parseInt(iY,10),  
+             parseInt(iX+mT,10), parseInt(iY,10),
+             parseInt(iX+mT,10), parseInt(iY+mH,10), 
+             parseInt(iX,10),  	 parseInt(iY+iH,10),
+             parseInt(iX-mT,10), parseInt(iY+mH,10)
            ];
 };
 window.jedo.getTimeFormat = function(indexLine, lineMode) {
-	var format = null;
 	if(lineMode === window.jedo.YEAR) {
-		format = d3.time.format("%Y년");
-	} else if(lineMode === window.jedo.QUARTER) {
-		format = d3.time.format("%Y년");
 		return function(oDate) {
-			var nQ = window.jedo.getQuarter(oDate);
-			return format(oDate)+"/"+nQ+"분기";
+			return Snap.format("{year}년", {
+				year: oDate.getFullYear()
+			});
+		};
+	} else if(lineMode === window.jedo.QUARTER) {
+		return function(oDate) {
+			return Snap.format("{year}년/{quarter}분기", {
+				year: oDate.getFullYear(),
+				quarter: window.jedo.getQuarter(oDate)
+			});
 		};
 	} else if(lineMode === window.jedo.MONTH) {
 		if(1 < indexLine) {
-			format = d3.time.format("%m월");
+			return function(oDate) {
+				return Snap.format("{month}월", {
+					month: oDate.getMonth()+1
+				});
+			};
 		} else {
-			format = d3.time.format("%Y년 %m월");
+			return function(oDate) {
+				return Snap.format("{year}년/{month}월", {
+					year: oDate.getFullYear(),
+					month: oDate.getMonth()+1
+				});
+			};
 		}
 	} else if(lineMode === window.jedo.WEEK) {
 		if(1 < indexLine) {
-			format = d3.time.format("%U주");
+			return function(oDate) {
+				var nDate = new Date();
+				nDate.setTime(oDate.getTime());
+				nDate.setMonth(0);
+				nDate.setDate(1);
+				nDate.setHours(0,0,1);
+				return Snap.format("{week}주", {
+					week: parseInt((oDate.getTime()-nDate.getTime())/(1000*60*60*24*7),10)
+				});
+			};
 		} else {
-			format = d3.time.format("%Y년 %U주");
+			return function(oDate) {
+				var nDate = new Date();
+				nDate.setTime(oDate.getTime());
+				nDate.setMonth(0);
+				nDate.setDate(1);
+				nDate.setHours(0,0,1);
+				return Snap.format("{year}년/{week}주", {
+					year: oDate.getFullYear(),
+					week: parseInt((oDate.getTime()-nDate.getTime())/(1000*60*60*24*7),10)
+				});
+			};
 		}
 	} else if(lineMode === window.jedo.DATE) {
-		format = d3.time.format("%d");
+		return function(oDate) {
+			return Snap.format("{date}", {
+				date: oDate.getDate()
+			});
+		};
 	} else if(lineMode === window.jedo.HOUR) {
-		format = d3.time.format("%H");
+		return function(oDate) {
+			return Snap.format("{hour}", {
+				hour: oDate.getHours()
+			});
+		};
 	} else {
 		throw new TypeError("lineMode["+lineMode+"] is bad");
 	}
-	return format;
 };
 window.jedo.getDateViewMode = function(options, oFnScale) {
 	//console.log("s -- window.jedo.getDateViewMode -- ");
@@ -386,7 +433,8 @@ window.jedo.getChangeSvgWidth = function(nDateViewMode, fnScale, options, svg) {
 	//console.log("e -- window.jedo.JedoGantt.prototype.getChangeSvgWidth -- ");
 };
 window.jedo.createRectHeaderLine = function(svgGanttHeader, indexLine, lineMode, arr) {
-	
+	//console.log("svgGanttHeader:"+svgGanttHeader);
+	/*
 	svgGanttHeader.selectAll('rect.rectheaderLine'+indexLine)
 		.data(arr)
 		.enter()
@@ -401,9 +449,18 @@ window.jedo.createRectHeaderLine = function(svgGanttHeader, indexLine, lineMode,
 			stroke : 'navy', 
 			'stroke-width' : 0
 		});
+	*/
+	arr.forEach(function(o, i){
+		svgGanttHeader.rect(o.x, o.y, o.width, o.height).attr({
+			'class': 'rectheaderLine'+indexLine,
+			fill : 'url(#headerGradient)', 
+			stroke : 'navy', 
+			'stroke-width' : 0
+		});
+	});
 };
 window.jedo.createRectHeaderLineTransition = function(svgGanttHeader, indexLine, lineMode, arr) {
-	
+	/*
 	svgGanttHeader.selectAll('rect.rectheaderLine'+indexLine)
 		.data(arr)
 		.enter()
@@ -420,6 +477,18 @@ window.jedo.createRectHeaderLineTransition = function(svgGanttHeader, indexLine,
 		}).transition().duration(1000)
 		.attr('x',function(d){return d.x2;})
 		.attr('width',function(d){return d.w2;});
+	*/
+	arr.forEach(function(o, i){
+		svgGanttHeader.rect(o.x, o.y, o.width, o.height).attr({
+			'class': 'rectheaderLine'+indexLine,
+			fill : 'url(#headerGradient)', 
+			stroke : 'navy', 
+			'stroke-width' : 0
+		}).animate({
+			x: o.x2,
+			width: o.w2
+		},1000);
+	});
 };
 window.jedo.getHeaderItemID = function(lineMode, sLineId, oDate) {
 	if(lineMode === window.jedo.YEAR) {
@@ -430,12 +499,20 @@ window.jedo.getHeaderItemID = function(lineMode, sLineId, oDate) {
 	} else if(lineMode === window.jedo.MONTH) {
 		return sLineId+"_"+oDate.getFullYear()+"_"+oDate.getMonth();
 	} else if(lineMode === window.jedo.WEEK) {
-		var iWeekNo = d3.time.format("%U")(oDate);
+		var nDate = new Date();
+		nDate.setTime(oDate.getTime());
+		nDate.setMonth(0);
+		nDate.setDate(1);
+		nDate.setHours(0,0,1);
+		var iWeekNo = parseInt((oDate.getTime()-nDate.getTime())/(1000*60*60*24*7),10);
 		return sLineId+"_"+oDate.getFullYear()+"_"+iWeekNo;
 	} else if(lineMode === window.jedo.DATE) {
 		return sLineId+"_"+oDate.getFullYear()+"_"+oDate.getDate();
 	} else if(lineMode === window.jedo.HOUR) {
-		return sLineId+"_"+d3.time.format("%Y-%m-%d")(oDate)+"_"+oDate.getHours();
+		var y = oDate.getFullYear();
+		var m = oDate.getMonth()+1;
+		var d = oDate.getDate();
+		return sLineId+"_"+y+m+d+"_"+oDate.getHours();
 	} else {
 		throw Error("lineMode is bad");
 	}
@@ -443,181 +520,152 @@ window.jedo.getHeaderItemID = function(lineMode, sLineId, oDate) {
 window.jedo.createTextHeaderLine = function(svgGanttHeader, indexLine, lineMode, arr, options) {
 	
 	var format = window.jedo.getTimeFormat(indexLine, lineMode);
-	svgGanttHeader.selectAll('text.textheaderLine'+indexLine)
-		.data(arr)
-		.enter()
-		.append('text')
-		.attr('class','textheaderLine'+indexLine)
-		.text(function(d){ return format(d.currentDate); })
-		.attr('x', function(d){ 
-			var bbox = this.getBBox();
-			//console.log(bbox);
-			var t = (d.width-bbox.width)/2;
-			return d.x+t; 
-		}).attr('y', function(d){ 
-			var bbox = this.getBBox();
-			//console.log(bbox);
-			//console.log("d.y:"+d.y);
-			//console.log("d.height:"+d.height);
-			return d.y + bbox.height + ((d.height-bbox.height)/3); 
-		}).attr('width', function(d){ return d.width; })
-		.attr('height', function(d){ return d.height; })
-		.style({
+	arr.forEach(function(o, i){
+		
+		var elem = svgGanttHeader.text(o.x, o.y, format(o.currentDate)).attr({
+			'class': 'textheaderLine'+indexLine,
 			'fill': 'red',
-			'font-family' : "Verdana",
-			'font-size' : options.header.fontSize
+			'font-family': "Verdana",
+			'font-size': options.header.fontSize
 		});
+		var bbox = elem.getBBox();
+		elem.attr({
+			x: o.x + (o.width-bbox.width)/2,
+			y: o.y + bbox.height + ((o.height-bbox.height)/3)
+		});
+	});
+	
 };
 window.jedo.createTextHeaderLineTransition = function(svgGanttHeader, indexLine, lineMode, arr, options) {
 	
 	var format = window.jedo.getTimeFormat(indexLine, lineMode);
-	svgGanttHeader.selectAll('text.textheaderLine'+indexLine)
-		.data(arr)
-		.enter()
-		.append('text')
-		.attr('class','textheaderLine'+indexLine)
-		.text(function(d){
-			return format(d.currentDate); 
-		}).attr('x', function(d){ 
-			return d.x;
-		}).attr('y', function(d){ 
-			return d.y + (d.height - (d.height/3));
-		}).attr('width', function(d){ 
-			return d.width; 
-		}).attr('height', function(d){ 
-			return d.height; 
-		}).style({
-			'fill' : 'red',
+	arr.forEach(function(o, i){
+		var elem = svgGanttHeader.text(o.x, o.y, format(o.currentDate)).attr({
+			'fill': 'red',
 			'font-family' : "Verdana",
 			'font-size' : options.header.fontSize
-		}).transition().duration(1000)
-		.attr('x',function(d){
-			var bbox = this.getBBox();
-			var t = (d.w2-bbox.width)/2;
-			return d.x2+t;
-		}).attr('y', function(d){ 
-			var bbox = this.getBBox();
-			return d.y2 + bbox.height + ((d.height-bbox.height)/3); 
-		}).attr('width',function(d){return d.w2;});
+		});
+		var bbox = elem.getBBox();
+		elem.attr({
+			x: o.x + (o.width-bbox.width)/2,
+			y: o.y + bbox.height + ((o.height-bbox.height)/3)
+		}).animate({
+			x: o.x2+(o.w2-bbox.width)/2,
+			y: o.y2 + bbox.height + ((o.height-bbox.height)/3)
+		},1000);
+	});
 };
 window.jedo.setGanttBodyLine = function(svgGanttBody, fnPrevScale, arr, iX) {
-	
+	console.log("s -- window.jedo.setGanttBodyLine -------------------------");
+	console.log("arr.length:"+arr.length);
+	console.log("iX:"+iX);
 	if(fnPrevScale) {
-		svgGanttBody.selectAll('rect.ganttBodyLine').attr('width', iX);
+		console.log("fnPrevScale is in");
+		svgGanttBody.selectAll('rect.ganttBodyLine').attr({'width': iX});
 	} else {
-		svgGanttBody.selectAll('rect.ganttBodyLine')
-			.data(arr)
-			.enter()
-			.append('rect')
-			.attr('class', 'ganttBodyLine')
-			.attr('x', 0)
-			.attr('y', function(d){ return d.lineY; })
-			.attr('width', iX)
-			.attr('height', function(d){ return d.lineHeight; })
-			.style('fill', function(d, i){ return i%2 ? '#FFFFF0' : '#F0FFF0'; });
+		arr.forEach(function(o,i){
+			//console.log("i:%i, x:%i, y:%i, w:%i, h:%i", i, o.x, o.y, iX, o.lineHeight);
+			var elem = svgGanttBody.rect(0, o.lineY, iX, o.lineHeight).attr({
+				'class': 'ganttBodyLine',
+				'fill': i%2 ? '#FFFFF0' : '#F0FFF0'
+			});
+		});
 	}
+	console.log("e -- window.jedo.setGanttBodyLine -------------------------");
 };
 window.jedo.setGanttBodyBar = function(svgGanttBody, fnPrevScale, arr, iX, oJedoGantt) {
-	
+	console.log("s -- window.jedo.setGanttBodyBar -------------------------");
 	if(fnPrevScale) {
 		arr.forEach(function(o,i){
-			svgGanttBody.selectAll("#rectGanttBar_"+o.id+", #startMarkGanttBar_"+o.id+", #endMarkGanttBar_"+o.id)
-				.transition().duration(1000)
-				.attr('x',function(d){
-					if(d3.select(this).attr("id") == "rectGanttBar_"+o.id) {
-						return o.x2;
-					} else {
-						return null;
-					}})
-				.attr('width',function(d){
-					if(d3.select(this).attr("id") == "rectGanttBar_"+o.id) {
-						return o.w2;
-					} else {
-						return null;
-					}})
-				.attr('points',function(d){
-					var oThis = d3.select(this);
-					if(oThis.attr("id") == "startMarkGanttBar_"+o.id) {
-						
-						var polyData = window.jedo.getMarkPoints(o.x2, o.y1, o.w2, o.h1);
-						return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" "); 
-					} else if(oThis.attr("id") == "endMarkGanttBar_"+o.id) {
-						
-						var polyData = window.jedo.getMarkPoints(o.x2+o.w2, o.y1, o.w2, o.h1);
-						return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" "); 
-					} 
-					return null;
-				});
+			try {
+				svgGanttBody.select("#rectGanttBar_"+o.id)
+				.animate({
+					x: o.x2,
+					width: o.w2
+				},1000);
+			} catch(e) {
+				console.log("error-rectGanttBar:"+e.message);
+			}
+			/*
+			if(o.isParent) {
+				try {
+					svgGanttBody.select("#startMarkGanttBar_"+o.id)
+						.animate({
+							'points': window.jedo.getMarkPoints(o.x2, o.y1, o.w2, o.h1).map(function(d){ return [d.x,d.y].join(",");}).join(" ")
+						},1000);
+				} catch(e) {
+					console.log("error-startMarkGanttBar:"+e.message);
+				}
+				try {
+					svgGanttBody.selectAll("#endMarkGanttBar_"+o.id)
+						.animate({
+							'points': window.jedo.getMarkPoints(o.x2+o.w2, o.y1, o.w2, o.h1).map(function(d){ return [d.x,d.y].join(",");}).join(" ")
+						},1000);
+				} catch(e) {
+					console.log("error-endMarkGanttBar:"+e.message);
+				}
+			}
+			*/
 		});
 		
 	} else {
-		var aGanttBodyBar = svgGanttBody.selectAll('g.ganttBar')
-							.data(arr)
-							.enter()
-							.append('g')
-							.attr('class', 'gGanttBar')
-							.attr('id', function(d){ return "gGanttBar_"+d.id;})
-							.attr('dataID', function(d){ return d.id;})
-							.attr('dataIndex', function(d,i){ return i;})
-							.attr('isParent', function(d){ return d.isParent;})
-							.attr('parentId', function(d){ return d.parentId;})
-							.attr('ganttBarHeight', function(d){ return d.ganttBarHeight;});
 		
-		aGanttBodyBar.append("rect").attr('class', 'rectGanttBar')
-							.attr('id', function(d){ return "rectGanttBar_"+d.id})
-							.attr('x', function(d){ return d.x1; })
-							.attr('y', function(d){ return d.y1; })
-							.attr('width', function(d){ return d.w1; })
-							.attr('height', function(d){ 
-								if(d.isParent) {
-									return (d.h1/3)*2;
-								} else {
-									return d.h1;
-								}
-							}).style({
-								'fill': 'url(#ganttBarGradient)', 
-								'stroke': '#ff69b4', 
-								'stroke-width': 0
-							})
-							.attr('dataID', function(d){ return d.id});
-		
-		
-
-		aGanttBodyBar.each(function(d,i){
-			//console.log("d.id:"+d.id+" d.isParent:"+d.isParent);
-			if(d.isParent) {
-				// start Group Mark.
-				var polyData = window.jedo.getMarkPoints(d.x1, d.y1, d.w1, d.h1);
-				svgGanttBody.select("#gGanttBar_"+d.id).append("polygon")
-						.attr("id", "startMarkGanttBar_"+d.id)
-						.attr("class", "startMarkGanttBar")
-				    	.attr("points",function(d) { 
-				    		return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" "); 
-				    	})
-						.style({
-							'fill': 'url(#ganttMarkGradient)', 
-							'stroke': '#000000', 
-							'stroke-width': 1
-						})
-						.attr('dataID', function(d){ return d.id});
+		var arrG = [];
+		arr.forEach(function(o,i){
+			var elem = svgGanttBody.rect(o.x1, o.y1, o.w1, o.isParent?(o.h1/3)*2:o.h1).attr({
+				'id': "rectGanttBar_"+o.id,
+				'fill': 'url(#ganttBarGradient)', 
+				'stroke': '#ff69b4', 
+				'stroke-width': 0
+			});
+			if(o.isParent) {
 				
-				// end group Mark.
-				polyData = window.jedo.getMarkPoints(d.x1+d.w1, d.y1, d.w1, d.h1);
-				svgGanttBody.select("#gGanttBar_"+d.id).append("polygon")
-						.attr("id", "endMarkGanttBar_"+d.id)
-						.attr("class", "endMarkGanttBar")
-				    	.attr("points",function(d) { 
-				    		return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" "); 
-				    	})
-						.style({
-							'fill': 'url(#ganttMarkGradient)', 
-							'stroke': '#000000', 
-							'stroke-width': 1
-						})
-						.attr('dataID', function(d){ return d.id});
+				
+				var sMGB = svgGanttBody.polygon(window.jedo.getMarkPointsArr(o.x1, o.y1, o.w1, o.h1)).attr({
+					"id": "startMarkGanttBar_"+o.id,
+					"class": "startMarkGanttBar",
+					'fill': 'url(#ganttMarkGradient)', 
+					'stroke': '#000000', 
+					'stroke-width': 1,
+					'dataID': o.id
+				});
+				
+				var eMGB = svgGanttBody.polygon(window.jedo.getMarkPointsArr(o.x1+o.w1, o.y1, o.w1, o.h1)).attr({
+					"id": "endMarkGanttBar_"+o.id,
+					"class": "endMarkGanttBar",
+					'fill': 'url(#ganttMarkGradient)', 
+					'stroke': '#000000', 
+					'stroke-width': 1,
+					'dataID': o.id
+				});
+				
+				svgGanttBody.group(elem, sMGB, eMGB).attr({
+					id: "gGanttBar_"+o.id,
+					'class': 'gGanttBar',
+					'dataID': o.id,
+					'dataIndex': i,
+					'isParent': o.isParent,
+					'parentId': o.parentId,
+					'ganttBarHeight': o.ganttBarHeight
+				});
+				
+				
+			} else {
+				svgGanttBody.group(elem).attr({
+					id: "gGanttBar_"+o.id,
+					'class': 'gGanttBar',
+					'dataID': o.id,
+					'dataIndex': i,
+					'isParent': o.isParent,
+					'parentId': o.parentId,
+					'ganttBarHeight': o.ganttBarHeight
+				});
 			}
+			
 		});
-	}
+		
+	}//if(fnPrevScale) {
+	console.log("e -- window.jedo.setGanttBodyBar -------------------------");
 };
 window.jedo.createWebWorker = function (sourceFile){
 	var requests = {}, // 키는 요청 ID이고, 값은 디퍼드다.
