@@ -17,13 +17,21 @@ if(typeof(Worker) === "undefined") {
 	throw new Error("javascript Worker need!");
 } 
 
-if(!window.jedo.hasOwnProperty("SettingGanttData")) {
+if(!jedo.JedoGantt.hasOwnProperty("SettingGanttData")) {
 	
-window.jedo.SettingGanttData = function (nViewMode, nSvgWidth, fnScale) {
+jedo.JedoGantt.SettingGanttData = function (nViewMode, nSvgPrevWidth, nSvgWidth, fnScale) {
 	
 	Object.defineProperty(this, "dateViewMode", {
 		get: function() {
 			return nViewMode;
+		},
+		enumerable: false,
+		configurable: false
+	});
+	
+	Object.defineProperty(this, "svgPrevWidth", {
+		get: function() {
+			return nSvgPrevWidth;
 		},
 		enumerable: false,
 		configurable: false
@@ -48,23 +56,21 @@ window.jedo.SettingGanttData = function (nViewMode, nSvgWidth, fnScale) {
 	
 	
 	var _ganttHeaderData = {};
-	var _getGanttHeaderData = function(indexLine, lineMode) {
-		var arr = _ganttHeaderData["HL"+indexLine+"M"+lineMode];
-		return arr;
-	};
-	var _setGanttHeaderData = function(indexLine, lineMode, arr) {
-		_ganttHeaderData["HL"+indexLine+"M"+lineMode] = arr;
-	};
 	Object.defineProperty(this, "getGanttHeaderData", {
 		get: function() {
-			return _getGanttHeaderData;
+			return function(indexLine, lineMode) {
+				var arr = _ganttHeaderData["HL"+indexLine+"M"+lineMode];
+				return arr;
+			};
 		},
 		enumerable: false,
 		configurable: false
 	});
 	Object.defineProperty(this, "setGanttHeaderData", {
 		get: function() {
-			return _setGanttHeaderData;
+			return function(indexLine, lineMode, arr) {
+				_ganttHeaderData["HL"+indexLine+"M"+lineMode] = arr;
+			};
 		},
 		enumerable: false,
 		configurable: false
@@ -83,9 +89,18 @@ window.jedo.SettingGanttData = function (nViewMode, nSvgWidth, fnScale) {
 		configurable: false
 	});
 	
+	Object.defineProperty(this, "getKeyString", {
+		get: function() {
+			return function() {
+				return jedo.JedoGantt.getGanttDataKeyString(nViewMode,nSvgPrevWidth,nSvgWidth);
+			};
+		},
+		enumerable: false,
+		configurable: false
+	});
+	
 	
 };
 
-
-}//if(!window.jedo.hasOwnProperty("SettingGanttData")) {
+}//if(!jedo.JedoGantt.hasOwnProperty("SettingGanttData")) {
 

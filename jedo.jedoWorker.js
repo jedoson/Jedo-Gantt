@@ -13,195 +13,23 @@
 */
 
 "use strict";
-var JedoWorker = {};
-Object.defineProperty(JedoWorker, "YEAR", {
-	get: function() {
-		return 1;
-	},
-	enumerable: false,
-	configurable: false
-});
-Object.defineProperty(JedoWorker, "QUARTER", {
-	get: function() {
-		return 2;
-	},
-	enumerable: false,
-	configurable: false
-});
-Object.defineProperty(JedoWorker, "MONTH", {
-	get: function() {
-		return 3;
-	},
-	enumerable: false,
-	configurable: false
-});
-Object.defineProperty(JedoWorker, "WEEK", {
-	get: function() {
-		return 4;
-	},
-	enumerable: false,
-	configurable: false
-});
-Object.defineProperty(JedoWorker, "DATE", {
-	get: function() {
-		return 5;
-	},
-	enumerable: false,
-	configurable: false
-});
-Object.defineProperty(JedoWorker, "HOUR", {
-	get: function() {
-		return 6;
-	},
-	enumerable: false,
-	configurable: false
-});
-Object.defineProperty(JedoWorker, "MIN", {
-	get: function() {
-		return 7;
-	},
-	enumerable: false,
-	configurable: false
-});
-Object.defineProperty(JedoWorker, "SEC", {
-	get: function() {
-		return 8;
-	},
-	enumerable: false,
-	configurable: false
-});
-Object.defineProperty(JedoWorker, "MIL", {
-	get: function() {
-		return 9;
-	},
-	enumerable: false,
-	configurable: false
-});
-JedoWorker.isInChildGantt = function (id, ganttData) {
-	var o = null;
-	var i = 0;
-	var nLength = ganttData.length;
-	for(i=0; i<nLength; i++) {
-		o = ganttData[i];
-		if(o.parentId == id) {
-			return true;
-		}
-	}
-	return false;
-};
-JedoWorker.getFnScale = function (oSDate, oEDate, nSpx, nEpx) {
-	var nSTime = oSDate.getTime();
-	var nETime = oEDate.getTime();
-	var nTime = nETime - nSTime;
-	var nPx = nEpx - nSpx;
-	return function (oDate, pDateScaleType){
-		return (nPx/nTime)*(oDate.getTime()-nSTime);
-	};
-};
-JedoWorker.getQuarter = function(oDate) {
-	if(!(oDate instanceof Date)) {
-		throw new TypeError("Param oDate is Bad");
-	}
-	var iMonth = oDate.getMonth();
-	switch (iMonth) {
-		case 0  : return 1;
-		case 1  : return 1;
-		case 2  : return 1;
-		case 3  : return 2;
-		case 4  : return 2;
-		case 5  : return 2;
-		case 6  : return 3;
-		case 7  : return 3;
-		case 8  : return 3;
-		case 9  : return 4;
-		case 10 : return 4;
-		case 11 : return 4;
-	}
-	return 0;
-};
-JedoWorker.setNextDate = function(oDate, lineMode, options) {
-	if(lineMode === JedoWorker.YEAR) {
-		oDate.setMonth(12);
-		oDate.setDate(0);
-		oDate.setHours(23);
-		oDate.setMinutes(59,59,999);
-	} else if(lineMode === JedoWorker.QUARTER) {
-		var nQuarter = JedoWorker.getQuarter(oDate);
-		oDate.setMonth(nQuarter*3);
-		oDate.setDate(0);
-		oDate.setHours(23,59,59,999);
-	} else if(lineMode === JedoWorker.MONTH) {
-		oDate.setMonth(oDate.getMonth()+1);
-		oDate.setDate(0);
-		oDate.setHours(23,59,59,999);
-	} else if(lineMode === JedoWorker.WEEK) {
-		var nWeekDay = oDate.getDay();
-    	if(nWeekDay != options.startWeekDay) {
-    		oDate.setDate(oDate.getDate()+((7-nWeekDay)+options.startWeekDay));
-    	} else {
-    		oDate.setDate(oDate.getDate()+6);
-    	}
-    	oDate.setHours(23,59,59,999);
-	} else if(lineMode === JedoWorker.DATE) {
-		oDate.setHours(23,59,59,999);
-	} else if(lineMode === JedoWorker.HOUR) {
-		//oDate.setHours(oDate.getHours()+1);
-		oDate.setMinutes(59,59,999);
-	}
-};
-JedoWorker.setEndDate = function(oDate, lineMode) {
-	if(	lineMode === JedoWorker.YEAR 		|| 
-		lineMode === JedoWorker.QUARTER 	|| 
-		lineMode === JedoWorker.MONTH 		|| 
-		lineMode === JedoWorker.WEEK       ||
-		lineMode === JedoWorker.DATE		) {
-		
-		oDate.setDate(oDate.getDate()+1);
-        oDate.setHours(0,0,0,1);
-        
-	} else if(lineMode === JedoWorker.HOUR) {
-		
-		oDate.setHours(oDate.getHours()+1,0,0,1);
 
-	} else {
-		throw Error("lineMode is bad");
-	}
-};
-JedoWorker.getHeaderItemID = function(lineMode, sLineId, oDate) {
-	if(lineMode === JedoWorker.YEAR) {
-		return sLineId+"_"+oDate.getFullYear();
-	} else if(lineMode === JedoWorker.QUARTER) {
-		var nQuarter = JedoWorker.getQuarter(oDate);
-		return sLineId+"_"+oDate.getFullYear()+"_"+nQuarter;
-	} else if(lineMode === JedoWorker.MONTH) {
-		return sLineId+"_"+oDate.getFullYear()+"_"+oDate.getMonth();
-	} else if(lineMode === JedoWorker.WEEK) {
-		var iWeekNo = 33;
-		return sLineId+"_"+oDate.getFullYear()+"_"+iWeekNo;
-	} else if(lineMode === JedoWorker.DATE) {
-		return sLineId+"_"+oDate.getFullYear()+"_"+oDate.getDate();
-	} else if(lineMode === JedoWorker.HOUR) {
-		var nY = oDate.getFullYear();
-		var nM = oDate.getMonth()+1;
-		var nD = oDate.getDate();
-		var sY = ""+nY;
-		var sM = nM < 10 ? "0"+nM : ""+nM;
-		var sD = nD < 10 ? "0"+sD : ""+sD;
-		return sLineId+"_"+sY+sM+sD+"_"+oDate.getHours();
-	} else {
-		throw Error("lineMode is bad");
-	}
-};
+importScripts('jedo.js');
+importScripts('jedo.var.js');
+
+if(!self.hasOwnProperty("JedoWorker")) {
+
+self.JedoWorker = {};
 JedoWorker.getSettingHeaderGanttData = function (options, indexLine, lineMode, nToWidth, nPrevWidth) {
 	//console.log("s -- jedo.JedoWorker.js - getSettingHeaderGanttData  --");
 	//console.log("indexLine:"+indexLine);
 	//console.log("lineMode:"+lineMode);
 	//console.log("nToWidth:"+nToWidth);
 	//console.log("nPrevWidth:"+nPrevWidth);
-	var fnScale = JedoWorker.getFnScale(options.startGanttDate, options.endGanttDate, 0, nToWidth);
+	var fnScale = jedo.getFnScale(options.startGanttDate, options.endGanttDate, 0, nToWidth);
 	var fnPrevScale = null;
 	if(nPrevWidth != null) {
-		fnPrevScale = JedoWorker.getFnScale(options.startGanttDate, options.endGanttDate, 0, nPrevWidth);
+		fnPrevScale = jedo.getFnScale(options.startGanttDate, options.endGanttDate, 0, nPrevWidth);
 		//console.log("fnPrevScale created");
 	} else {
 		//console.log("fnPrevScale is null");
@@ -224,8 +52,6 @@ JedoWorker.getSettingHeaderGanttData = function (options, indexLine, lineMode, n
 	var iHeaderLineHeight = options.header.lineHeight-options.unitSpace;
 	var iLastHeaderLineHeight = options.header.lineHeight-(options.unitSpace*2);
 	
-	//var fnFormat = getTimeFormat(indexLine, lineMode);
-	
 	if(fnPrevScale) {
 		iLeft = fnPrevScale(options.startGanttDate);
 		iToLeft = fnScale(options.startGanttDate);
@@ -244,7 +70,7 @@ JedoWorker.getSettingHeaderGanttData = function (options, indexLine, lineMode, n
 			iToLeft = iToEnd+1;
 		}
 
-    	JedoWorker.setNextDate(oDate, lineMode, options);
+		jedo.setNextDate(oDate, lineMode, options);
     	if(nGanttEndTime < oDate.getTime()) {
     		oDate.setTime(nGanttEndTime);
     		oDate.setHours(23,59,59,999);
@@ -276,7 +102,7 @@ JedoWorker.getSettingHeaderGanttData = function (options, indexLine, lineMode, n
 				h2 : h,
 				title : 'dd', //fnFormat(oDate),
 				currentDate : new Date(oDate.getTime()),
-				itemId : JedoWorker.getHeaderItemID(lineMode, sLineId, oDate),
+				itemId : jedo.getHeaderItemID(lineMode, sLineId, oDate),
 				style : {
 					fill : 'yellow', 
 					stroke : 'navy', 
@@ -288,7 +114,7 @@ JedoWorker.getSettingHeaderGanttData = function (options, indexLine, lineMode, n
 					fontSize : options.header.fontSize
 				}
 		}
-		JedoWorker.setEndDate(oDate, lineMode);
+		jedo.setEndDate(oDate, lineMode);
     }
 	//console.log("e -- jedo.JedoWorker.js - getSettingHeaderGanttData  --");
 	return arr;
@@ -296,10 +122,10 @@ JedoWorker.getSettingHeaderGanttData = function (options, indexLine, lineMode, n
 JedoWorker.getSettingBodyGanttBarData = function (options, startGanttDate, endGanttDate, nToWidth, nPrevWidth) {
 	//console.log("s -- jedo.JedoWorker.js - getSettingBodyGanttBarData  --");
 	
-	var fnScale = JedoWorker.getFnScale(startGanttDate, endGanttDate, 0, nToWidth);
+	var fnScale = jedo.getFnScale(startGanttDate, endGanttDate, 0, nToWidth);
 	var fnPrevScale = null;
 	if(nPrevWidth != null) {
-		fnPrevScale = JedoWorker.getFnScale(startGanttDate, endGanttDate, 0, nPrevWidth);
+		fnPrevScale = jedo.getFnScale(startGanttDate, endGanttDate, 0, nPrevWidth);
 		//console.log("fnPrevScale created");
 	} else {
 		//console.log("fnPrevScale is null");
@@ -312,7 +138,6 @@ JedoWorker.getSettingBodyGanttBarData = function (options, startGanttDate, endGa
 	var iLine = 0;
 	var iWidth = 0;
 	var iToWidth = 0;
-	var iGanttBarHeight = options.lineHeight-(options.body.barSpace*2);
 	var iHeadLineCount = options.header.viewLineCount;
 	var nSvgHeaderHeight = options.header.lineHeight*iHeadLineCount;
 	
@@ -359,13 +184,13 @@ JedoWorker.getSettingBodyGanttBarData = function (options, startGanttDate, endGa
 			x1 : iSPos,
 			y1 : nSvgHeaderHeight+((options.lineHeight*i)+options.body.barSpace),
 			w1 : iWidth,
-			h1 : iGanttBarHeight,
+			h1 : options.ganttBarHeight,
 			x2 : iToSPos,
 			w2 : iToWidth,
 			lineHeight : options.lineHeight,
-			ganttBarHeight : iGanttBarHeight,
+			ganttBarHeight : options.ganttBarHeight,
 			lineY : nSvgHeaderHeight+(options.lineHeight*i),
-			isParent : JedoWorker.isInChildGantt(sID, options.ganttData),
+			isParent : jedo.isInChildGantt(sID, options.ganttData),
 			parentId : o.parentId,
 			style : {
 				fill: '#0000cd', 
@@ -427,7 +252,7 @@ self.addEventListener('message', function(e) {
 
 
 
-
+} //if(!self.hasOwnProperty("JedoWorker")) {
 
 
 
