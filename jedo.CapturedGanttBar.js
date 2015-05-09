@@ -57,21 +57,22 @@ jedo.CapturedGanttBar = function (svgPoint, capturedMode, capturedDataID, captur
 		configurable: false
 	});
 	
-	
-	var _clearCapturedGanttBar = function() {
-		d3.selectAll("#rectGanttBar_"+this.capturedDataID+", #startMarkGanttBar_"+this.capturedDataID+", #endMarkGanttBar_"+this.capturedDataID)
-			.each(function(){
-				d3.select(this).style({'cursor':'default'});
-				if(this.getAttribute("class") == "rectGanttBar") {
-					d3.select(this).style({'stroke-width':0});
-				} else {
-					d3.select(this).style({'stroke-width':1});
-				}
-			});
-	};
 	Object.defineProperty(this, "clearCapturedGanttBar", {
 		get: function() {
-			return _clearCapturedGanttBar;
+			
+			var id = this.capturedDataID;
+			
+			return function() {
+				d3.selectAll("#rectGanttBar_"+id+", #startMarkGanttBar_"+id+", #endMarkGanttBar_"+id)
+					.each(function(){
+						d3.select(this).style({'cursor':'default'});
+						if(this.getAttribute("class") == "rectGanttBar") {
+							d3.select(this).style({'stroke-width':0});
+						} else {
+							d3.select(this).style({'stroke-width':1});
+						}
+					});
+				};
 		},
 		enumerable: false,
 		configurable: false

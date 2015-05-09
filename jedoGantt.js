@@ -33,7 +33,7 @@
 					.attr("width", nWidth)
 					.attr("height", (options.ganttData.length+options.header.viewLineCount)*options.lineHeight);
 		var oJedoGantt = new window.jedo.JedoGantt(options, this, svg);
-		oJedoGantt.initJedoGantt(nWidth);
+		oJedoGantt.initJedoGantt();
 		
 	};
 })(jQuery);

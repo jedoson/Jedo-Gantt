@@ -142,6 +142,42 @@ Object.defineProperty(jedo, "getFnScale", {
 	enumerable: false,
 	configurable: false
 });
+
+
+/*\
+ * jedo.getTime
+ [ method ]
+
+ * 시간시작일, 시간종요일, svg 폭, 화면지점
+ * 화면상의 위치를 리턴 하는 함수를 리턴한다.
+
+ > Arguments
+
+ - oSDate (Date) SVG 화면의 시작일자
+ - oEDate (Date) SVG 화면의 종료일자
+ - nSpx   (number) SVG 화면 시작점.
+ - nEpx   (number) SVG 화면 폭.
+
+ = (function) function of returned 
+\*/
+Object.defineProperty(jedo, "getFnTime", {
+	get: function() {
+		return function(oSDate, oEDate, nSpx, nEpx) {
+			var nSTime = oSDate.getTime();
+			var nETime = oEDate.getTime();
+			var nTime = nETime - nSTime;
+			var nPx = nEpx - nSpx;
+			return function (xClient){
+				//return (oDate.getTime()*nPx)/nTime;
+				var t = (nTime/nPx)*xClient;
+				//console.log("s -- getFnTime nTime["+nTime+"] nPx["+nPx+"] xClient["+xClient+"] t:"+t);
+				return new Date(nSTime+t);
+			};
+		};
+	},
+	enumerable: false,
+	configurable: false
+});
 Object.defineProperty(jedo, "getQuarter", {
 	get: function() {
 		return function(oDate) {

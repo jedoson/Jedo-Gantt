@@ -21,174 +21,34 @@ if(!jedo.hasOwnProperty("JedoGantt")) {
 jedo.JedoGantt = function (options, ganttContainer, svg) {
 	
 	Object.defineProperty(this, "options", {
-		get: function() {
-			return options;
-		},
 		enumerable: false,
-		configurable: false
+		configurable: false,
+		writable: false,
+		value: options
 	});
 	
 	Object.defineProperty(this, "ganttContainer", {
-		get: function() {
-			return ganttContainer;
-		},
 		enumerable: false,
-		configurable: false
+		configurable: false,
+		writable: false,
+		value: ganttContainer
 	});
 	
 	Object.defineProperty(this, "svg", {
-		get: function() {
-			return svg;
-		},
 		enumerable: false,
-		configurable: false
+		configurable: false,
+		writable: false,
+		value: svg
 	});
 	
 	// -------------------------------------------------------------------------------------//
-	var _arrGanttWidth = [];
-	Object.defineProperty(this, "pushGanttWidth", {
-		get: function() {
-			return function(w) {
-				_arrGanttWidth.push(w);
-			};
-		},
-		enumerable: false,
-		configurable: false
-	});
-	Object.defineProperty(this, "popGanttWidth", {
-		get: function() {
-			return function() {
-				_arrGanttWidth.pop();
-			};
-		},
-		enumerable: false,
-		configurable: false
-	});
-	Object.defineProperty(this, "dateViewModeSvgPrevWidth", {
-		get: function() {
-			return _arrGanttWidth[_arrGanttWidth.length-2];
-		},
-		enumerable: false,
-		configurable: false
-	});
 	
-	
-	var _arrGanttDataKey = [];
-	var _settingGanttData = {};
-	Object.defineProperty(this, "getSettingGanttData", {
-		get: function() {
-			return function(sGanttDataKey) {
-				return _settingGanttData[sGanttDataKey];
-			};
-		},
+	Object.defineProperty(this, "settingConfig", {
 		enumerable: false,
-		configurable: false
+		configurable: false,
+		writable: false,
+		value: new jedo.JedoGantt.SettingConfig()
 	});
-	Object.defineProperty(this, "setSettingGanttData", {
-		get: function() {
-			return function(oSettingGanttData) {
-				if(!oSettingGanttData instanceof jedo.JedoGantt.SettingGanttData) {
-					throw new TypeError("param oSettingGanttData is not instance of jedo.SettingGanttData ");
-				}
-				var sGanttDataKey = oSettingGanttData.getKeyString();
-				var o = _settingGanttData[sGanttDataKey];
-				if(o != null) {
-					throw new Error("sGanttDataKey "+sGanttDataKey+" is already in ");
-				}
-				_settingGanttData[sGanttDataKey] = oSettingGanttData;
-				_arrGanttDataKey.push(sGanttDataKey);
-			};
-		},
-		enumerable: false,
-		configurable: false
-	});
-	
-	Object.defineProperty(this, "dateViewMode", {
-		get: function() {
-			return _settingGanttData[_arrGanttDataKey[_arrGanttDataKey.length-1]].dateViewMode;
-		},
-		enumerable: false,
-		configurable: false
-	});
-	
-	Object.defineProperty(this, "changePrevDateViewMode", {
-		get: function() {
-			return function () {
-				if(_arrGanttDataKey.length == 1) throw new Error("Prev Gantt Data Not In");
-				return _arrGanttDataKey.pop();
-			};
-		},
-		enumerable: false,
-		configurable: false
-	});
-	
-	Object.defineProperty(this, "isGanttData", {
-		get: function() {
-			return function(nViewMode, nSvgPrevWidth, nSvgWidth) {
-				var k = jedo.JedoGantt.getGanttDataKeyString(nViewMode, nSvgPrevWidth, nSvgWidth);
-				return _settingGanttData.hasOwnProperty(k);
-			};
-		},
-		enumerable: false,
-		configurable: false
-	});
-	
-	
-	
-	Object.defineProperty(this, "dateViewModeSvgWidth", {
-		get: function() {
-			return _settingGanttData[_arrGanttDataKey[_arrGanttDataKey.length-1]].svgWidth;
-		},
-		enumerable: false,
-		configurable: false
-	});
-	
-	
-
-	Object.defineProperty(this, "fnScale", {
-		get: function() {
-			return _settingGanttData[_arrGanttDataKey[_arrGanttDataKey.length-1]].fnScale;
-		},
-		enumerable: false,
-		configurable: false
-	});
-	Object.defineProperty(this, "fnPrevScale", {
-		get: function() {
-			if(_arrGanttDataKey.length < 2) return null;
-			return _settingGanttData[_arrGanttDataKey[_arrGanttDataKey.length-2]].fnScale;
-		},
-		enumerable: false,
-		configurable: false
-	});
-	
-	
-	Object.defineProperty(this, "getGanttHeaderData", {
-		get: function() {
-			return _settingGanttData[_arrGanttDataKey[_arrGanttDataKey.length-1]].getGanttHeaderData;
-		},
-		enumerable: false,
-		configurable: false
-	});
-	Object.defineProperty(this, "setGanttHeaderData", {
-		get: function() {
-			return _settingGanttData[_arrGanttDataKey[_arrGanttDataKey.length-1]].setGanttHeaderData;
-		},
-		enumerable: false,
-		configurable: false
-	});
-	
-
-	Object.defineProperty(this, "ganttBodyData", {
-		get: function() {
-			return _settingGanttData[_arrGanttDataKey[_arrGanttDataKey.length-1]].ganttBodyData;
-		},
-		set: function(nData) {
-			_settingGanttData[_arrGanttDataKey[_arrGanttDataKey.length-1]].ganttBodyData = nData;
-		},
-		enumerable: false,
-		configurable: false
-	});
-	
 	
 	
 	// -------------------------------------------------------------------------------------//
@@ -205,15 +65,15 @@ jedo.JedoGantt = function (options, ganttContainer, svg) {
 		configurable: false
 	});
 	
-	var _clearCapturedGanttBar = function() {
-		if(_capturedGanttBar) {
-			_capturedGanttBar.clearCapturedGanttBar();
-		} 
-		_capturedGanttBar = null;
-	};
+
 	Object.defineProperty(this, "clearCapturedGanttBar", {
 		get: function() {
-			return _clearCapturedGanttBar;
+			return function() {
+				if(_capturedGanttBar) {
+					_capturedGanttBar.clearCapturedGanttBar();
+				} 
+				_capturedGanttBar = null;
+			};
 		},
 		enumerable: false,
 		configurable: false
@@ -288,7 +148,7 @@ Object.defineProperty(jedo.JedoGantt, "getZoomOutViewMode", {
 });
 Object.defineProperty(jedo.JedoGantt, "getChangeSvgWidth", {
 	get: function() {
-		return function(nDateViewMode, fnScale, options, svg) {
+		return function(nToDateViewMode, fnScale, options, svg) {
 			//console.log("s -- jedo.JedoGantt.prototype.getChangeSvgWidth -- ");
 			
 			var xWidth = svg.attr('width');
@@ -303,7 +163,7 @@ Object.defineProperty(jedo.JedoGantt, "getChangeSvgWidth", {
 			
 			var iWidth = 0;
 			var nWidth = xWidth;
-			switch (nDateViewMode) {
+			switch (nToDateViewMode) {
 				case jedo.VIEW_MODE.YEAR :    // Year
 			    	oDate.setMonth(12);
 			    	oDate.setDate(0);
@@ -398,7 +258,7 @@ Object.defineProperty(jedo.JedoGantt, "getChangeSvgWidth", {
 					}
 					break;
 				default :
-					throw new TypeError("Param nDateViewMode["+nDateViewMode+"] is Bad");
+					throw new TypeError("Param nToDateViewMode["+nToDateViewMode+"] is Bad");
 			}
 			return nWidth;
 			//console.log("e -- jedo.JedoGantt.prototype.getChangeSvgWidth -- ");
@@ -466,38 +326,12 @@ Object.defineProperty(jedo.JedoGantt, "getDateViewMode", {
 	enumerable: false,
 	configurable: false
 });
-
-/*\
- * jedo.getTime
- [ method ]
-
- * 시간시작일, 시간종요일, svg 폭, 화면지점
- * 화면상의 위치를 리턴 하는 함수를 리턴한다.
-
- > Arguments
-
- - oSDate (Date) SVG 화면의 시작일자
- - oEDate (Date) SVG 화면의 종료일자
- - nSpx   (number) SVG 화면 시작점.
- - nEpx   (number) SVG 화면 폭.
-
- = (function) function of returned 
-\*/
-Object.defineProperty(jedo.JedoGantt, "getTime", {
-	get: function() {
-		return function(oSDate, oEDate, nSpx, nEpx, xClient) {
-			return ((oEDate.getTime()-oSDate.getTime())/(nEpx-nSpx))*xClient;
-		};
-	},
-	enumerable: false,
-	configurable: false
-});
 Object.defineProperty(jedo.JedoGantt, "getSVGCursorPoint", {
 	get: function() {
-		return function(svg, event) {
+		return function(svg, clientX, clientY) {
 			var pt = svg.node().createSVGPoint();
-			pt.x = event.clientX; 
-			pt.y = event.clientY;
+			pt.x = clientX; 
+			pt.y = clientY;
 		    var a = svg.node().getScreenCTM();
 		    var b = a.inverse();
 		    return pt.matrixTransform(b);

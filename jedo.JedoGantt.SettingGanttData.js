@@ -19,36 +19,79 @@ if(typeof(Worker) === "undefined") {
 
 if(!jedo.JedoGantt.hasOwnProperty("SettingGanttData")) {
 	
-jedo.JedoGantt.SettingGanttData = function (nViewMode, nSvgPrevWidth, nSvgWidth, fnScale) {
+
+/*\
+ * jedo.JedoGantt.SettingGanttData
+ [ construct ]
+
+ * 줌인/줌아웃 으로 화면의 설정값.
+
+ > Arguments
+
+ - nViewMode		(number) 뷰모드(년,분기,월,일,시간,분,초,밀리세컨드)
+ - nSvgPrevWidth	(number) 이전 화면의 폭
+ - nSvgPrevWidth	(number) 현재 화면의 폭
+ - fnScale			(function) 시간을 인수로 화면 X좌표를 구하는 함수.
+
+ = (null) 
+\*/
+jedo.JedoGantt.SettingGanttData = function (nViewMode, nSvgPrevWidth, nSvgWidth, fnScale, fnTime) {
 	
 	Object.defineProperty(this, "dateViewMode", {
-		get: function() {
-			return nViewMode;
-		},
 		enumerable: false,
-		configurable: false
+		configurable: false,
+		writable: false,
+		value: nViewMode
 	});
 	
 	Object.defineProperty(this, "svgPrevWidth", {
-		get: function() {
-			return nSvgPrevWidth;
-		},
 		enumerable: false,
-		configurable: false
+		configurable: false,
+		writable: false,
+		value: nSvgPrevWidth
 	});
 	
 	Object.defineProperty(this, "svgWidth", {
-		get: function() {
-			return nSvgWidth;
-		},
 		enumerable: false,
-		configurable: false
+		configurable: false,
+		writable: false,
+		value: nSvgWidth
 	});
 	
 	
 	Object.defineProperty(this, "fnScale", {
+		enumerable: false,
+		configurable: false,
+		writable: false,
+		value: fnScale
+	});
+	
+	Object.defineProperty(this, "fnTime", {
+		enumerable: false,
+		configurable: false,
+		writable: false,
+		value: fnTime
+	});
+	
+	var _scrollLeft = null;
+	Object.defineProperty(this, "scrollLeft", {
 		get: function() {
-			return fnScale;
+			return _scrollLeft;
+		},
+		set: function(nScrollLeft) {
+			_scrollLeft = nScrollLeft;
+		},
+		enumerable: false,
+		configurable: false
+	});
+	
+	var _viewStartDate = null;
+	Object.defineProperty(this, "viewStartDate", {
+		get: function() {
+			return _viewStartDate;
+		},
+		set: function(oDate) {
+			_viewStartDate = oDate;
 		},
 		enumerable: false,
 		configurable: false
@@ -89,14 +132,11 @@ jedo.JedoGantt.SettingGanttData = function (nViewMode, nSvgPrevWidth, nSvgWidth,
 		configurable: false
 	});
 	
-	Object.defineProperty(this, "getKeyString", {
-		get: function() {
-			return function() {
-				return jedo.JedoGantt.getGanttDataKeyString(nViewMode,nSvgPrevWidth,nSvgWidth);
-			};
-		},
+	Object.defineProperty(this, "keyString", {
 		enumerable: false,
-		configurable: false
+		configurable: false,
+		writable: false,
+		value: jedo.JedoGantt.getGanttDataKeyString(nViewMode,nSvgPrevWidth,nSvgWidth)
 	});
 	
 	

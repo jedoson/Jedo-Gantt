@@ -15,7 +15,7 @@
 "use strict";
 
 importScripts('jedo.js');
-importScripts('jedo.var.js');
+//importScripts('jedo.var.js');
 
 if(!self.hasOwnProperty("JedoWorker")) {
 
