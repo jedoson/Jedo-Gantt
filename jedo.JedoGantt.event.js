@@ -20,50 +20,37 @@ if(typeof(Worker) === "undefined") {
 if(!jedo.JedoGantt.prototype.hasOwnProperty("onMouseDownChangePrevViewMode")) {
 
 
-/*\
- * jedo.JedoGantt.prototype.changeScrollGanttContainer
- [ method ]
 
- * 화면모드가 변경시 화면폭이 변경된다, 
- * 화면폭변경 이벤트를 주어 사용자가 클릭한 시점의 시간위치값과 화면이 변경된 후의 시간위치값이 같게한다.
-
- > Arguments
-
- - nSvgToWidth   (number) 최종 SVG폭
- - nClickPer     (number) 클릭시 시간위치 백분률
- - nClientX      (number) 클릭시 보여지는 시간위치의 펙셀위치값.(X스크롤값 제외).
-
-
- = (function) function of returned 
-\*/
-Object.defineProperty(jedo.JedoGantt.prototype, "changeScrollGanttContainer", {
+Object.defineProperty(jedo.JedoGantt.prototype, "onScrollGanttContainer", {
 	get: function() {
 		
 		var _oJedoGantt = this;
 		var _svg = _oJedoGantt.svg;
-		var _oGanttContainer = $(this.ganttContainer);
+		var _options = _oJedoGantt.options;
+		var _settingConfig = _oJedoGantt.settingConfig;
+		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
 		
-		return function (nSvgToWidth, nClickPer, nClientX) {
-			//console.log("s -- jedo.JedoGantt.prototype.changeScrollGanttContainer  --");
-			//console.log("nSvgToWidth["+nSvgToWidth+"] nClickPer["+nClickPer+"] nClientX["+nClientX+"]");
-			var observer = new MutationObserver(function(mutations) {
-				mutations.forEach(function(mutation) {
-					var w = _svg.attr("width");
-					var nToTimePx = (w*nClickPer)/100;
-					var nTScroll = nToTimePx - nClientX;
-					_oGanttContainer.scrollLeft(nTScroll);
-					if((nSvgToWidth-5) < w) {
-						observer.disconnect();
-					}
-				});
-			});
-			observer.observe(this.svg.node(), { 
-			    attributes: true,
-			    attributeFilter: ["width"],
-			    attributeOldValue: false,
-			    childList: false
-			});
-			//console.log("e -- jedo.JedoGantt.prototype.changeScrollGanttContainer  --");
+		return function(event){
+			//console.log("s -- jedo.JedoGantt.prototype.onScrollGanttContainer scroll -- ");
+			
+			var nST = _oGanttContainer.scrollTop();
+			var nSL = _oGanttContainer.scrollLeft();
+			//var ss = jedo.gantt.VIEW_WIDTH+nSL;
+			//console.log("svgWidth["+_settingConfig.svgWidth+"] viewWidth["+jedo.gantt.VIEW_WIDTH+"] scrollLeft["+nSL+"] s["+ss+"]");
+			_svg.select('g.ganttHeader').attr('transform', 'translate(0,'+nST+')');
+			_svg.select('rect.ganttHeaderBack').attr('transform', 'translate('+nSL+',0)');
+			
+			var dateScrollLeft = _settingConfig.fnTime(nSL);
+			//console.log("dateScrollLeft["+dateScrollLeft.toISOString()+"]");
+			
+			_settingConfig.scrollLeft = nSL;
+			_settingConfig.viewStartDate = dateScrollLeft;
+			
+			
+			if((jedo.gantt.VIEW_WIDTH+nSL) === _settingConfig.svgWidth) {
+				_oJedoGantt.addViewDate();
+			}
+			//console.log("e -- jedo.JedoGantt.prototype.onScrollGanttContainer scroll -- ");
 		}
 	},
 	enumerable: false,
@@ -85,10 +72,9 @@ Object.defineProperty(jedo.JedoGantt.prototype, "onMouseDownChangePrevViewMode",
 			var nClickPer = (svgPoint.x*100)/nSvgWidth;
 
 			var nToDataViewMode = jedo.JedoGantt.getZoomOutViewMode(_settingConfig.dateViewMode);
-			var nSvgToWidth = _settingConfig.dateViewModeSvgPrevWidth;
+			var nSvgToWidth = _settingConfig.popGanttWidth();
 			var nPrevScrollLeft = _settingConfig.prevScrollLeft;
 			var oPrevViewStartDate = _settingConfig.prevViewStartDate;
-			_settingConfig.popGanttWidth();
 			
 			//_oJedoGantt.changeScrollGanttContainer(nSvgToWidth, _settingConfig.clickPer, _settingConfig.viewX);
 			var observer = new MutationObserver(function(mutations) {
@@ -148,7 +134,7 @@ Object.defineProperty(jedo.JedoGantt.prototype, "onMouseDownGanttBar", {
 		return function(event) {
 //			console.log("s -- jedo.JedoGantt.prototype.onMouseDownGanttBar  --");
 //			console.log("event.type:"+event.type+" clientX:"+event.clientX+" x:"+event.x+" clientY:"+event.clientY+" y:"+event.y);
-		//	
+
 			_oJedoGantt.clearCapturedGanttBar();
 			
 			var oTarget = d3.select(event.target);
@@ -292,22 +278,25 @@ Object.defineProperty(jedo.JedoGantt.prototype, "onMouseUpGanttHeader", {
 		var _svg = _oJedoGantt.svg;
 		var _options = _oJedoGantt.options;
 		var _settingConfig = _oJedoGantt.settingConfig;
-		var _oGanttContainer = $(this.ganttContainer);
+		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
 		
 		return function(event) {
 			//console.log("s -- jedo.JedoGantt.prototype.onMouseUpGanttHeader  --");
 			
 			var svgPoint = jedo.JedoGantt.getSVGCursorPoint(_svg, event.clientX, event.clientY);
-			var nClickPer = (svgPoint.x*100)/_svg.attr("width");
+			//var nClickPer = (svgPoint.x*100)/_settingConfig.svgWidth;
 			//console.log("nClickPer["+nClickPer+"]");
-			
+			var oClickDate = _settingConfig.fnTime(svgPoint.x);
+			console.log("oClickDate["+oClickDate.toISOString()+"]");
 			
 			var nToDateViewMode = jedo.JedoGantt.getZoomInViewMode(_settingConfig.dateViewMode);
+			console.log("dateViewMode["+_settingConfig.dateViewModeString+"] nToDateViewMode["+jedo.VIEW_MODE.toString(nToDateViewMode)+"]");
 			var nSvgToWidth = jedo.JedoGantt.getChangeSvgWidth(nToDateViewMode, _settingConfig.fnScale, _options, _svg);
+			console.log("svgWidth["+_settingConfig.svgWidth+"] nSvgToWidth["+nSvgToWidth+"]");
 			_settingConfig.pushGanttWidth(nSvgToWidth);
 			
 			var promise = _oJedoGantt.changeGanttViewMode(svgPoint, nToDateViewMode, nSvgToWidth);
-			_oJedoGantt.changeScrollGanttContainer(nSvgToWidth, nClickPer, event.clientX);
+			_oJedoGantt.changeScrollGanttContainer(nSvgToWidth, oClickDate, event.clientX);
 			
 			//console.log("e -- jedo.JedoGantt.prototype.onMouseUpGanttHeader  --");
 		};

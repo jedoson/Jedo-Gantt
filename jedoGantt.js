@@ -28,9 +28,8 @@
 		oGanttContainer.width(document.documentElement.clientWidth - 5);
 		oGanttContainer.height(document.documentElement.clientHeight - 5);
 
-		var nWidth = oGanttContainer.width()-17;
 		var svg = d3.select("#"+oGanttContainer.attr("id")).append("svg")
-					.attr("width", nWidth)
+					.attr("width", oGanttContainer.width()-17)
 					.attr("height", (options.ganttData.length+options.header.viewLineCount)*options.lineHeight);
 		var oJedoGantt = new window.jedo.JedoGantt(options, this, svg);
 		oJedoGantt.initJedoGantt();

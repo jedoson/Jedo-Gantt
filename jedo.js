@@ -84,6 +84,24 @@ Object.defineProperty(jedo.VIEW_MODE, "MIL", {
 	writable: false,
 	value: 9809
 });
+Object.defineProperty(jedo.VIEW_MODE, "toString", {
+	get: function() {
+		return function(nViewMode) {
+			if(nViewMode === jedo.VIEW_MODE.YEAR)		return "jedo.VIEW_MODE.YEAR";
+			if(nViewMode === jedo.VIEW_MODE.QUARTER)	return "jedo.VIEW_MODE.QUARTER";
+			if(nViewMode === jedo.VIEW_MODE.MONTH)		return "jedo.VIEW_MODE.MONTH";
+			if(nViewMode === jedo.VIEW_MODE.WEEK)		return "jedo.VIEW_MODE.WEEK";
+			if(nViewMode === jedo.VIEW_MODE.DATE)		return "jedo.VIEW_MODE.DATE";
+			if(nViewMode === jedo.VIEW_MODE.HOUR)		return "jedo.VIEW_MODE.HOUR";
+			if(nViewMode === jedo.VIEW_MODE.MIN)		return "jedo.VIEW_MODE.MIN";
+			if(nViewMode === jedo.VIEW_MODE.SEC)		return "jedo.VIEW_MODE.SEC";
+			if(nViewMode === jedo.VIEW_MODE.MIL)		return "jedo.VIEW_MODE.MIL";
+			throw new Error("jedo.VIEW_MODE.toString nViewMode is bad");
+		};
+	},
+	enumerable: false,
+	configurable: false
+});
 
 jedo.CAPTURED_MODE = {};
 Object.defineProperty(jedo, "CAPTURED_MODE", {
@@ -109,6 +127,13 @@ Object.defineProperty(jedo.CAPTURED_MODE, "MOVE_CHANGE", {
 	writable: false,
 	value: 9903
 });
+Object.defineProperty(jedo, "gantt", {
+	enumerable: false,
+	configurable: false,
+	writable: false,
+	value:{}
+});
+
 
 /*\
  * jedo.getFnScale
@@ -269,25 +294,27 @@ Object.defineProperty(jedo, "getHeaderItemID", {
 	get: function() {
 		return function(lineMode, sLineId, oDate) {
 			if(lineMode === jedo.VIEW_MODE.YEAR) {
-				return sLineId+"_"+oDate.getFullYear();
+				return sLineId+"_Y"+oDate.getFullYear();
 			} else if(lineMode === jedo.VIEW_MODE.QUARTER) {
 				var nQuarter = jedo.getQuarter(oDate);
-				return sLineId+"_"+oDate.getFullYear()+"_"+nQuarter;
+				return sLineId+"_Y"+oDate.getFullYear()+"_Q"+nQuarter;
 			} else if(lineMode === jedo.VIEW_MODE.MONTH) {
-				return sLineId+"_"+oDate.getFullYear()+"_"+oDate.getMonth();
+				return sLineId+"_Y"+oDate.getFullYear()+"_M"+oDate.getMonth();
 			} else if(lineMode === jedo.VIEW_MODE.WEEK) {
-				var iWeekNo = 33;
-				return sLineId+"_"+oDate.getFullYear()+"_"+iWeekNo;
+				var nTime = oDate.getTime();
+				var sDate = new Date(nTime);
+				sDate.setMonth(0);
+				sDate.setDate(1);
+				sDate.setHours(0,0,1,1);
+				var mil = nTime - sDate.getTime();
+				var iWeekNo = parseInt((((((mil/1000)/60)/60)/24)/7),10);
+				return sLineId+"_Y"+oDate.getFullYear()+"_W"+iWeekNo;
 			} else if(lineMode === jedo.VIEW_MODE.DATE) {
-				return sLineId+"_"+oDate.getFullYear()+"_"+oDate.getDate();
+				return sLineId+"_Y"+oDate.getFullYear()+"_M"+oDate.getMonth()+"_D"+oDate.getDate();
 			} else if(lineMode === jedo.VIEW_MODE.HOUR) {
-				var nY = oDate.getFullYear();
-				var nM = oDate.getMonth()+1;
-				var nD = oDate.getDate();
-				var sY = ""+nY;
-				var sM = nM < 10 ? "0"+nM : ""+nM;
-				var sD = nD < 10 ? "0"+sD : ""+sD;
-				return sLineId+"_"+sY+sM+sD+"_"+oDate.getHours();
+				return sLineId+"_Y"+oDate.getFullYear()+"_M"+oDate.getMonth()+"_D"+oDate.getDate()+"_H"+oDate.getHours();
+			} else if(lineMode === jedo.VIEW_MODE.MIN) {
+				return sLineId+"_Y"+oDate.getFullYear()+"_M"+oDate.getMonth()+"_D"+oDate.getDate()+"_H"+oDate.getHours()+"_m"+oDate.getMinutes();
 			} else {
 				throw Error("lineMode is bad");
 			}
@@ -314,8 +341,6 @@ Object.defineProperty(jedo, "isInChildGantt", {
 	enumerable: false,
 	configurable: false
 });
-
-
 
 
 }//if(!hasOwnProperty("jedo")) {

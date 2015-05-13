@@ -35,7 +35,7 @@ if(!jedo.JedoGantt.hasOwnProperty("SettingGanttData")) {
 
  = (null) 
 \*/
-jedo.JedoGantt.SettingGanttData = function (nViewMode, nSvgPrevWidth, nSvgWidth, fnScale, fnTime) {
+jedo.JedoGantt.SettingGanttData = function (nViewMode, nSvgPrevWidth, nSvgWidth, dateViewStart, dateViewEnd) {
 	
 	Object.defineProperty(this, "dateViewMode", {
 		enumerable: false,
@@ -44,57 +44,68 @@ jedo.JedoGantt.SettingGanttData = function (nViewMode, nSvgPrevWidth, nSvgWidth,
 		value: nViewMode
 	});
 	
+	Object.defineProperty(this, "dateViewModeString", {
+		enumerable: false,
+		configurable: false,
+		writable: false,
+		value: jedo.JedoGantt.getViewModeString(nViewMode)
+	});
+	
 	Object.defineProperty(this, "svgPrevWidth", {
 		enumerable: false,
 		configurable: false,
 		writable: false,
-		value: nSvgPrevWidth
+		value: parseInt(nSvgPrevWidth)
 	});
 	
 	Object.defineProperty(this, "svgWidth", {
 		enumerable: false,
 		configurable: false,
 		writable: false,
-		value: nSvgWidth
+		value: parseInt(nSvgWidth,10)
 	});
 	
+	Object.defineProperty(this, "dateViewStart", {
+		enumerable: false,
+		configurable: false,
+		writable: false,
+		value: dateViewStart
+	});
+	
+	Object.defineProperty(this, "dateViewEnd", {
+		enumerable: false,
+		configurable: false,
+		writable: false,
+		value: dateViewEnd
+	});
+
 	
 	Object.defineProperty(this, "fnScale", {
 		enumerable: false,
 		configurable: false,
 		writable: false,
-		value: fnScale
+		value: jedo.getFnScale(dateViewStart, dateViewEnd, 0, nSvgWidth)
 	});
 	
 	Object.defineProperty(this, "fnTime", {
 		enumerable: false,
 		configurable: false,
 		writable: false,
-		value: fnTime
+		value: jedo.getFnTime(dateViewStart, dateViewEnd, 0, nSvgWidth)
 	});
 	
-	var _scrollLeft = null;
 	Object.defineProperty(this, "scrollLeft", {
-		get: function() {
-			return _scrollLeft;
-		},
-		set: function(nScrollLeft) {
-			_scrollLeft = nScrollLeft;
-		},
 		enumerable: false,
-		configurable: false
+		configurable: false,
+		writable: true,
+		value: 0
 	});
 	
-	var _viewStartDate = null;
 	Object.defineProperty(this, "viewStartDate", {
-		get: function() {
-			return _viewStartDate;
-		},
-		set: function(oDate) {
-			_viewStartDate = oDate;
-		},
 		enumerable: false,
-		configurable: false
+		configurable: false,
+		writable: true,
+		value: dateViewStart
 	});
 	
 	

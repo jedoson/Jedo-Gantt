@@ -33,7 +33,7 @@ jedo.JedoGantt.SettingConfig = function () {
 	Object.defineProperty(this, "popGanttWidth", {
 		get: function() {
 			return function() {
-				_arrGanttWidth.pop();
+				return _arrGanttWidth.pop();
 			};
 		},
 		enumerable: false,
@@ -94,6 +94,14 @@ jedo.JedoGantt.SettingConfig = function () {
 		configurable: false
 	});
 	
+	Object.defineProperty(this, "dateViewModeString", {
+		get: function() {
+			return _settingGanttData[_arrGanttDataKey[_arrGanttDataKey.length-1]].dateViewModeString;
+		},
+		enumerable: false,
+		configurable: false
+	});
+	
 	Object.defineProperty(this, "changePrevDateViewMode", {
 		get: function() {
 			return function () {
@@ -117,8 +125,24 @@ jedo.JedoGantt.SettingConfig = function () {
 	});
 	
 	
+	Object.defineProperty(this, "dateViewStart", {
+		get: function() {
+			return _settingGanttData[_arrGanttDataKey[_arrGanttDataKey.length-1]].dateViewStart;
+		},
+		enumerable: false,
+		configurable: false
+	});
 	
-	Object.defineProperty(this, "dateViewModeSvgWidth", {
+	Object.defineProperty(this, "dateViewEnd", {
+		get: function() {
+			return _settingGanttData[_arrGanttDataKey[_arrGanttDataKey.length-1]].dateViewEnd;
+		},
+		enumerable: false,
+		configurable: false
+	});
+	
+	
+	Object.defineProperty(this, "svgWidth", {
 		get: function() {
 			return _settingGanttData[_arrGanttDataKey[_arrGanttDataKey.length-1]].svgWidth;
 		},
@@ -126,7 +150,13 @@ jedo.JedoGantt.SettingConfig = function () {
 		configurable: false
 	});
 	
-	
+	Object.defineProperty(this, "svgPrevWidth", {
+		get: function() {
+			return _settingGanttData[_arrGanttDataKey[_arrGanttDataKey.length-1]].svgPrevWidth;
+		},
+		enumerable: false,
+		configurable: false
+	});
 
 	Object.defineProperty(this, "fnScale", {
 		get: function() {

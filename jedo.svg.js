@@ -188,11 +188,12 @@ Object.defineProperty(jedo.svg, "createRectHeaderLine", {
 				.enter()
 				.append('rect')
 				.attr('class', 'rectheaderLine'+indexLine)
-				.attr('x', function(d){ return d.x; 
-				}).attr('y', function(d){ return d.y; 
-				}).attr('width', function(d){ return d.width; 
-				}).attr('height', function(d){ return d.height; 
-				}).style({
+				.attr('id', function(d){ return d.itemId; })
+				.attr('x', function(d){ return d.x; })
+				.attr('y', function(d){ return d.y; })
+				.attr('width', function(d){ return d.width; })
+				.attr('height', function(d){ return d.height; })
+				.style({
 					fill : 'url(#headerGradient)', 
 					stroke : 'navy', 
 					'stroke-width' : 0
@@ -213,6 +214,7 @@ Object.defineProperty(jedo.svg, "createRectHeaderLineTransition", {
 				.enter()
 				.append('rect')
 				.attr('class', 'rectheaderLine'+indexLine)
+				.attr('id', function(d){ return d.itemId; })
 				.attr('x', function(d){ return d.x; })
 				.attr('y', function(d){ return d.y; })
 				.attr('width', function(d){ return d.width; })
@@ -220,8 +222,8 @@ Object.defineProperty(jedo.svg, "createRectHeaderLineTransition", {
 				.style({
 					'fill' : 'url(#headerGradient)', 
 					'stroke' : 'navy', 
-					'stroke-width' : 0
-				}).transition().duration(1000)
+					'stroke-width' : 0 })
+				.transition().duration(1000)
 				.attr('x',function(d){return d.x2; })
 				.attr('width',function(d){ return d.w2; })
 				.each("end", function(){
@@ -245,19 +247,20 @@ Object.defineProperty(jedo.svg, "createTextHeaderLine", {
 				.enter()
 				.append('text')
 				.attr('class','textheaderLine'+indexLine)
+				.attr('id', function(d){ return d.itemId+"T"; })
 				.text(function(d){ return format(d.currentDate); })
 				.attr('x', function(d){ 
 					var bbox = this.getBBox();
 					//console.log(bbox);
 					var t = (d.width-bbox.width)/2;
-					return d.x+t; 
-				}).attr('y', function(d){ 
+					return d.x+t; })
+				.attr('y', function(d){ 
 					var bbox = this.getBBox();
 					//console.log(bbox);
 					//console.log("d.y:"+d.y);
 					//console.log("d.height:"+d.height);
-					return d.y + bbox.height + ((d.height-bbox.height)/3); 
-				}).attr('width', function(d){ return d.width; })
+					return d.y + bbox.height + ((d.height-bbox.height)/3); })
+				.attr('width', function(d){ return d.width; })
 				.attr('height', function(d){ return d.height; })
 				.style({
 					'fill': 'red',
@@ -281,31 +284,31 @@ Object.defineProperty(jedo.svg, "createTextHeaderLineTransition", {
 				.enter()
 				.append('text')
 				.attr('class','textheaderLine'+indexLine)
+				.attr('id', function(d){ return d.itemId+"T"; })
 				.text(function(d){
-					return format(d.currentDate); 
-				}).attr('x', function(d){ 
-					return d.x;
-				}).attr('y', function(d){ 
-					return d.y + (d.height - (d.height/3));
-				}).attr('width', function(d){ 
-					return d.width; 
-				}).attr('height', function(d){ 
-					return d.height; 
-				}).style({
+					return format(d.currentDate); })
+				.attr('x', function(d){ 
+					return d.x; })
+				.attr('y', function(d){ 
+					return d.y + (d.height - (d.height/3)); })
+				.attr('width', function(d){ 
+					return d.width; })
+				.attr('height', function(d){ 
+					return d.height; })
+				.style({
 					'fill' : 'red',
 					'font-family' : "Verdana",
-					'font-size' : options.header.fontSize
-				}).transition().duration(1000)
+					'font-size' : options.header.fontSize })
+				.transition().duration(1000)
 				.attr('x',function(d){
 					var bbox = this.getBBox();
 					var t = (d.w2-bbox.width)/2;
-					return d.x2+t;
-				}).attr('y', function(d){ 
+					return d.x2+t; })
+				.attr('y', function(d){ 
 					var bbox = this.getBBox();
-					return d.y2 + bbox.height + ((d.height-bbox.height)/3); 
-				}).attr('width',function(d){
-						return d.w2;
-					})
+					return d.y2 + bbox.height + ((d.height-bbox.height)/3); })
+				.attr('width',function(d){
+						return d.w2; })
 				.each("end",function(){
 					if(arr.length == ++count) {
 						deferred.resolve();

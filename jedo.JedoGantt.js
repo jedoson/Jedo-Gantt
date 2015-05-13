@@ -80,9 +80,6 @@ jedo.JedoGantt = function (options, ganttContainer, svg) {
 	});
 	
 	// -------------------------------------------------------------------------------------//
-	
-	
-	
 };
 Object.defineProperty(jedo.JedoGantt, "getGanttDataKeyString", {
 	get: function() {
@@ -356,7 +353,15 @@ Object.defineProperty(jedo.JedoGantt, "getMarkPoints", {
 	enumerable: false,
 	configurable: false
 });
-
+Object.defineProperty(jedo.JedoGantt, "setMouseUpGanttHeader", {
+	get: function() {
+		return function(event) {
+			_oJedoGantt.onMouseUpGanttHeader.call(_oJedoGantt, event);
+		};
+	},
+	enumerable: false,
+	configurable: false
+});
 
 
 
