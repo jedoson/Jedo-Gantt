@@ -17,11 +17,9 @@ if(typeof(Worker) === "undefined") {
 	throw new Error("javascript Worker need!");
 } 
 
-if(!jedo.JedoGantt.prototype.hasOwnProperty("onMouseDownChangePrevViewMode")) {
+if(!jedo.JedoGantt.prototype.hasOwnProperty("onScrollTimeFixedElement")) {
 
-
-
-Object.defineProperty(jedo.JedoGantt.prototype, "onScrollGanttContainer", {
+Object.defineProperty(jedo.JedoGantt.prototype, "onScrollTimeFixedElement", {
 	get: function() {
 		
 		var _oJedoGantt = this;
@@ -31,24 +29,60 @@ Object.defineProperty(jedo.JedoGantt.prototype, "onScrollGanttContainer", {
 		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
 		
 		return function(event){
-			//console.log("s -- jedo.JedoGantt.prototype.onScrollGanttContainer scroll -- ");
-			
 			var nST = _oGanttContainer.scrollTop();
 			var nSL = _oGanttContainer.scrollLeft();
-			//var ss = jedo.gantt.VIEW_WIDTH+nSL;
-			//console.log("svgWidth["+_settingConfig.svgWidth+"] viewWidth["+jedo.gantt.VIEW_WIDTH+"] scrollLeft["+nSL+"] s["+ss+"]");
 			_svg.select('g.ganttHeader').attr('transform', 'translate(0,'+nST+')');
-			_svg.select('rect.ganttHeaderBack').attr('transform', 'translate('+nSL+',0)');
+			_svg.select('rect.ganttHeaderBack').attr('x', nSL+10);
+		}
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(jedo.JedoGantt.prototype, "onScrollGanttContainer", {
+	get: function() {
+		
+		var _oJedoGantt = this;
+		var _svg = _oJedoGantt.svg;
+		var _options = _oJedoGantt.options;
+		var _settingConfig = _oJedoGantt.settingConfig;
+		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
+		
+		var promise = null;
+		
+		
+		return function(event){
 			
-			var dateScrollLeft = _settingConfig.fnTime(nSL);
-			//console.log("dateScrollLeft["+dateScrollLeft.toISOString()+"]");
-			
-			_settingConfig.scrollLeft = nSL;
-			_settingConfig.viewStartDate = dateScrollLeft;
-			
-			
-			if((jedo.gantt.VIEW_WIDTH+nSL) === _settingConfig.svgWidth) {
-				_oJedoGantt.addViewDate();
+			if(promise == null) {
+				if(_settingConfig.svgWidth < (jedo.gantt.VIEW_WIDTH + 50)) return;
+				
+				//console.log("s -- jedo.JedoGantt.prototype.onScrollGanttContainer scroll -- ");
+				
+				var nST = _oGanttContainer.scrollTop();
+				var nSL = _oGanttContainer.scrollLeft();
+
+				var dateScrollLeft = _settingConfig.fnTime(nSL);
+				//console.log("dateScrollLeft["+dateScrollLeft.toISOString()+"]");
+				
+				_settingConfig.scrollLeft = nSL;
+				_settingConfig.viewStartDate = dateScrollLeft;
+				
+				var nSumScroll = jedo.gantt.VIEW_WIDTH+nSL;
+				//console.log("nSumScroll["+nSumScroll+"] _settingConfig.svgWidth["+_settingConfig.svgWidth+"]");
+				
+				// 사용자가 스크롤 하여 최우측으로 이동
+				if(nSL === 0) {
+					_oGanttContainer.scrollLeft(3);
+					promise = _oJedoGantt.appendFirstViewDate();
+				} else if(_settingConfig.svgWidth < (nSumScroll+10)) {
+					promise = _oJedoGantt.appendLastViewDate();
+				}
+				
+				$.when(promise).done(function(){
+					promise = null;
+				});
+			} else {
+				
+				event.preventDefault();
 			}
 			//console.log("e -- jedo.JedoGantt.prototype.onScrollGanttContainer scroll -- ");
 		}
@@ -290,9 +324,9 @@ Object.defineProperty(jedo.JedoGantt.prototype, "onMouseUpGanttHeader", {
 			console.log("oClickDate["+oClickDate.toISOString()+"]");
 			
 			var nToDateViewMode = jedo.JedoGantt.getZoomInViewMode(_settingConfig.dateViewMode);
-			console.log("dateViewMode["+_settingConfig.dateViewModeString+"] nToDateViewMode["+jedo.VIEW_MODE.toString(nToDateViewMode)+"]");
-			var nSvgToWidth = jedo.JedoGantt.getChangeSvgWidth(nToDateViewMode, _settingConfig.fnScale, _options, _svg);
-			console.log("svgWidth["+_settingConfig.svgWidth+"] nSvgToWidth["+nSvgToWidth+"]");
+			//console.log("dateViewMode["+_settingConfig.dateViewModeString+"] nToDateViewMode["+jedo.VIEW_MODE.toString(nToDateViewMode)+"]");
+			var nSvgToWidth = jedo.JedoGantt.getChangeSvgWidth(nToDateViewMode, _settingConfig, _options, _svg);
+			//console.log("svgWidth["+_settingConfig.svgWidth+"] nSvgToWidth["+nSvgToWidth+"]");
 			_settingConfig.pushGanttWidth(nSvgToWidth);
 			
 			var promise = _oJedoGantt.changeGanttViewMode(svgPoint, nToDateViewMode, nSvgToWidth);

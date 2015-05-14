@@ -145,18 +145,18 @@ Object.defineProperty(jedo.JedoGantt, "getZoomOutViewMode", {
 });
 Object.defineProperty(jedo.JedoGantt, "getChangeSvgWidth", {
 	get: function() {
-		return function(nToDateViewMode, fnScale, options, svg) {
+		return function(nToDateViewMode, settingConfig, options, svg) {
 			//console.log("s -- jedo.JedoGantt.prototype.getChangeSvgWidth -- ");
 			
 			var xWidth = svg.attr('width');
 			var xHeight = svg.attr('height');
 			
 			var oDate = new Date();
-			oDate.setTime(options.startGanttDate.getTime());
+			oDate.setTime(settingConfig.dateViewStart.getTime());
 			oDate.setMonth(0);
 			oDate.setDate(1);
 			oDate.setHours(0,0,0,0);
-			var iSPos = fnScale(oDate, jedo.DATE_SCALE_TYPE_START);
+			var iSPos = settingConfig.fnScale(oDate, jedo.DATE_SCALE_TYPE_START);
 			
 			var iWidth = 0;
 			var nWidth = xWidth;
@@ -165,7 +165,7 @@ Object.defineProperty(jedo.JedoGantt, "getChangeSvgWidth", {
 			    	oDate.setMonth(12);
 			    	oDate.setDate(0);
 			    	oDate.setHours(23,59,59,999);
-					iWidth = fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
+					iWidth = settingConfig.fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
 					//console.debug("One YEAR["+jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
 					if(iWidth < options.unitWidth) {
 						nWidth = ( xWidth / iWidth ) * options.unitWidth;
@@ -178,7 +178,7 @@ Object.defineProperty(jedo.JedoGantt, "getChangeSvgWidth", {
 			    	oDate.setMonth(nMonth);
 			    	oDate.setDate(0);
 			    	oDate.setHours(23,59,59,999);
-					iWidth = fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
+					iWidth = settingConfig.fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
 					//console.debug("One QUARTER["+jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
 					if(iWidth < options.unitWidth) {
 						nWidth = ( xWidth / iWidth ) * options.unitWidth;
@@ -189,7 +189,7 @@ Object.defineProperty(jedo.JedoGantt, "getChangeSvgWidth", {
 					oDate.setMonth(oDate.getMonth()+1);
 					oDate.setDate(0);
 					oDate.setHours(23,59,59,999);
-					iWidth = fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
+					iWidth = settingConfig.fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
 					//console.debug("One MONTH["+jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
 					if(iWidth < options.unitWidth) {
 						nWidth = ( xWidth / iWidth ) * options.unitWidth;
@@ -199,7 +199,7 @@ Object.defineProperty(jedo.JedoGantt, "getChangeSvgWidth", {
 				case jedo.VIEW_MODE.WEEK :    // 주
 					oDate.setDate(7);
 					oDate.setHours(23,59,59,999);
-					iWidth = fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
+					iWidth = settingConfig.fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
 					//console.debug("One Week["+jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
 					if(iWidth < options.unitWidth) {
 						nWidth = ( xWidth / iWidth ) * options.unitWidth;
@@ -209,7 +209,7 @@ Object.defineProperty(jedo.JedoGantt, "getChangeSvgWidth", {
 				case jedo.VIEW_MODE.DATE :    // 일
 					oDate.setDate(oDate.getDate()+1);
 					oDate.setHours(23,59,59,999);
-					iWidth = fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
+					iWidth = settingConfig.fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
 					//console.debug("One DATE["+jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
 					if(iWidth < options.unitWidth) {
 						nWidth = ( xWidth / iWidth ) * options.unitWidth;
@@ -219,7 +219,7 @@ Object.defineProperty(jedo.JedoGantt, "getChangeSvgWidth", {
 				case jedo.VIEW_MODE.HOUR :    // 시간
 					//console.debug("jedo.HOUR -- DATE["+jedo.getFomattedDate(oDate)+"]h:"+oDate.getHours());
 					oDate.setHours(oDate.getHours()+1,59,59,999);
-					iWidth = fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
+					iWidth = settingConfig.fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
 					//console.debug("One HOUR["+jedo.getFomattedDate(oDate)+"]h:"+oDate.getHours()+" Width:"+iWidth);
 					iWidth = iWidth == 0 ? 1 : iWidth;
 					if(iWidth < options.unitWidth) {
@@ -229,7 +229,7 @@ Object.defineProperty(jedo.JedoGantt, "getChangeSvgWidth", {
 					break;
 				case jedo.VIEW_MODE.MIN :     // 분
 					oDate.setMinutes(oDate.getMinutes()+1,59,999);
-					iWidth = fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
+					iWidth = settingConfig.fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
 					//console.debug("One MIN["+jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
 					if(iWidth < options.unitWidth) {
 						nWidth = ( xWidth / iWidth ) * options.unitWidth;
@@ -238,7 +238,7 @@ Object.defineProperty(jedo.JedoGantt, "getChangeSvgWidth", {
 					break;
 				case jedo.VIEW_MODE.SEC :     // 초
 					oDate.setSeconds(oDate.getSeconds()+1,999);
-					iWidth = fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
+					iWidth = settingConfig.fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
 					//console.debug("One SEC["+jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
 					if(iWidth < options.unitWidth) {
 						nWidth = ( xWidth / iWidth ) * options.unitWidth;
@@ -247,7 +247,7 @@ Object.defineProperty(jedo.JedoGantt, "getChangeSvgWidth", {
 					break;
 				case jedo.VIEW_MODE.MIL :     // 밀리초
 					oDate.setMilliseconds(oDate.getMilliseconds()+1);
-					iWidth = fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
+					iWidth = settingConfig.fnScale(oDate, jedo.DATE_SCALE_TYPE_END) - iSPos;
 					//console.debug("One MIL["+jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
 					if(iWidth < options.unitWidth) {
 						nWidth = ( xWidth / iWidth ) * options.unitWidth;

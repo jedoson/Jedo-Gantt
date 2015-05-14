@@ -19,7 +19,7 @@
 		
 		var startGanttDate = new Date();
 		var endGanttDate = new Date();
-		endGanttDate.setDate(startGanttDate.getDate()+100);
+		//endGanttDate.setDate(startGanttDate.getDate()+100);
 		
 		var options = $.extend({},jedo.options,options);
 		

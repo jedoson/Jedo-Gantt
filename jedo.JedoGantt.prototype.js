@@ -80,6 +80,7 @@ Object.defineProperty(jedo.JedoGantt.prototype, "initJedoGantt", {
 			$.when(	_oJedoGantt.changeGanttBodyViewMode(), 
 					_oJedoGantt.changeGanttHeaderViewMode())
 					.done(function(){
+						_oGanttContainer.on("scroll", _oJedoGantt.onScrollTimeFixedElement.bind(_oJedoGantt));
 						_oGanttContainer.on("scroll", _oJedoGantt.onScrollGanttContainer.bind(_oJedoGantt));
 						_svg.node().addEventListener("mousemove",_oJedoGantt.onMouseMoveBar.bind(_oJedoGantt),false);
 						_svg.node().addEventListener("mouseup",  _oJedoGantt.onMouseUpBar.bind(_oJedoGantt),  false);
@@ -114,11 +115,16 @@ Object.defineProperty(jedo.JedoGantt.prototype, "changeGanttViewMode", {
 					var nSvgWidth = _settingConfig.svgWidth;
 					var bDataViewMode = _settingConfig.isGanttData(nToDateViewMode, nSvgWidth, nSvgToWidth);
 					if(!bDataViewMode) {
+
+						
+						/*
+						 * 보여지진 시작 시간값과 마지막 시간값을 조정할 필요가 있을거 같다.
+						 */
 						_settingConfig.setSettingGanttData(
 								new jedo.JedoGantt.SettingGanttData(
 										nToDateViewMode, nSvgWidth, nSvgToWidth, 
-										new Date(_options.startGanttDate.getTime()),
-					    				new Date(_options.endGanttDate.getTime())
+										new Date(_settingConfig.dateViewStart.getTime()),
+					    				new Date(_settingConfig.dateViewEnd.getTime())
 									));
 					} else {
 						_settingConfig.changePrevDateViewMode();
@@ -446,8 +452,9 @@ Object.defineProperty(jedo.JedoGantt.prototype, "changeScrollGanttContainer", {
 	enumerable: false,
 	configurable: false
 });
-Object.defineProperty(jedo.JedoGantt.prototype, "addViewDate", {
+Object.defineProperty(jedo.JedoGantt.prototype, "appendLastViewDate", {
 	get: function() {
+		
 		var _oJedoGantt = this;
 		var _svg = _oJedoGantt.svg;
 		var _options = _oJedoGantt.options;
@@ -458,11 +465,12 @@ Object.defineProperty(jedo.JedoGantt.prototype, "addViewDate", {
 		var nHeaderLineCount = _options.header.viewLineCount;
 		
 		return function() {
-			console.log("s -- jedo.JedoGantt.prototype.addViewDate -- ");
+			//console.log("s -- jedo.JedoGantt.prototype.appendLastViewDate -- ");
 			
 			var deferred = $.Deferred();
 			
 			try {
+				//console.log("_settingConfig.dateViewStart["+_settingConfig.dateViewStart.toISOString()+"] _settingConfig.dateViewEnd["+_settingConfig.dateViewEnd.toISOString()+"]")
 				var nSTime = _settingConfig.dateViewStart.getTime();
 				var nETime = _settingConfig.dateViewEnd.getTime();
 				var nWTime = _settingConfig.fnTime(jedo.gantt.VIEW_WIDTH).getTime() - nSTime;
@@ -478,7 +486,7 @@ Object.defineProperty(jedo.JedoGantt.prototype, "addViewDate", {
 				var _arrPromise = [];
 				var oJedoWorker = {};
 				
-				var nSvgWidth = parseInt(_settingConfig.svgWidth,10);
+				var nSvgWidth = _settingConfig.svgWidth;
 				
 				var nDataViewMode = _settingConfig.dateViewMode;
 				for(var i=0; i<nHeaderLineCount; i++) {
@@ -500,12 +508,10 @@ Object.defineProperty(jedo.JedoGantt.prototype, "addViewDate", {
 			    		switch(event.data.cmd) {
 			    		case "SettingAddHeaderGanttData":
 			    			//console.log("s -- jedo.JedoGantt.prototype.addViewDate - SettingAddHeaderGanttData -- ");
-			    			//console.log("indexLine["+event.data.indexLine+"] lineMode["+jedo.VIEW_MODE.toString(event.data.lineMode)+"]");
-			    			//_oJedoGantt.settingConfig.setGanttHeaderData(event.data.indexLine, event.data.lineMode, event.data.ganttHeaderDatas);
-			    			//var promise = _oJedoGantt.setHeaderLineMode(event.data.indexLine, event.data.lineMode, event.data.ganttHeaderDatas);
 			    			
 			    			var indexLine = event.data.indexLine;
 			    			var lineMode = event.data.lineMode;
+			    			var headerDatas = event.data.ganttHeaderDatas;
 			    			
 			    			var itemId = event.data.ganttHeaderDatas[0].itemId;
 			    			var svgRectHeader = _svgGanttHeader.select('#'+itemId);
@@ -530,50 +536,11 @@ Object.defineProperty(jedo.JedoGantt.prototype, "addViewDate", {
 				    					});
 				    			}
 			    			}
+			    			jedo.svg.appendHeaderLine(_svgGanttHeader, _options, headerDatas, indexLine, lineMode, nSvgWidth);
 			    			
-			    			_svgGanttHeader.selectAll('rect.newrectheaderLine')
-			    				.data(event.data.ganttHeaderDatas)
-								.enter()
-								.append('rect')
-								.attr('class', 'rectheaderLine'+indexLine)
-								.attr('id', function(d){ return d.itemId; })
-								.attr('x', function(d){
-									return nSvgWidth+d.x; })
-								.attr('y', function(d){ return d.y; })
-								.attr('width', function(d){ return d.width; })
-								.attr('height', function(d){ return d.height; })
-								.style({
-									fill : 'url(#headerGradient)', //'#DA70D6', 
-									stroke : 'navy', 
-									'stroke-width' : 0 });
-			    			
-			    			var format = jedo.svg.getTimeFormat(indexLine, lineMode);
-			    			_svgGanttHeader.selectAll('text.newtextheaderLine')
-			    				.data(event.data.ganttHeaderDatas)
-			    				.enter()
-			    				.append('text')
-			    				.attr('class','textheaderLine'+indexLine)
-			    				.attr('id', function(d){ return d.itemId+"T"; })
-			    				.text(function(d){ return format(d.currentDate); })
-			    				.attr('x', function(d){ 
-			    					var bbox = this.getBBox();
-			    					//console.log(bbox);
-			    					var t = (d.width-bbox.width)/2;
-			    					return nSvgWidth+d.x+t; })
-			    				.attr('y', function(d){ 
-			    					var bbox = this.getBBox();
-			    					return d.y + bbox.height + ((d.height-bbox.height)/3); })
-			    				.attr('width', function(d){ return d.width; })
-			    				.attr('height', function(d){ return d.height; })
-			    				.style({
-			    					'fill': 'blue',
-			    					'font-family' : "Verdana",
-			    					'font-size' : _options.header.fontSize });
-			    				
 			    			var sSelect = event.data.ganttHeaderDatas.map(function(o){
 				    			return "#"+o.itemId+", #"+o.itemId+"T";
 				    		}).join(", ");
-			    			//console.log("sSelect:"+sSelect);
 			    			var svgHeaderLine = _svgGanttHeader.selectAll(sSelect);
 			    			svgHeaderLine.each(function(){
 								this.addEventListener("mouseup", function(event){
@@ -599,15 +566,164 @@ Object.defineProperty(jedo.JedoGantt.prototype, "addViewDate", {
 				} // for(var i=0; i<nHeaderLineCount; i++) {
 				
 				$.when.apply($, _arrPromise).done(function(){
-					console.log("s -- _arrPromise -- ");
-					
+					_settingConfig.changeViewData(nSvgToWidth, new Date(_settingConfig.dateViewStart.getTime()), dateViewEnd);
 					deferred.resolve();
-					console.log("e -- _arrPromise -- ");
 				});
 				
 				
-				console.log("e -- jedo.JedoGantt.prototype.addViewDate -- ");
+				//console.log("e -- jedo.JedoGantt.prototype.appendLastViewDate -- ");
 			} finally {
+				return deferred.promise();
+			}
+		}
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(jedo.JedoGantt.prototype, "appendFirstViewDate", {
+	get: function() {
+		
+		var _bNowWorking = false;
+		
+		var _oJedoGantt = this;
+		var _svg = _oJedoGantt.svg;
+		var _options = _oJedoGantt.options;
+		var _settingConfig = _oJedoGantt.settingConfig;
+		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
+		
+		var _svgGanttHeader = _svg.select("g.ganttHeader");
+		var nHeaderLineCount = _options.header.viewLineCount;
+		
+		return function() {
+			console.log("s -- jedo.JedoGantt.prototype.appendFirstViewDate -- ");
+			
+			var deferred = $.Deferred();
+			try {
+				var nSTime = _settingConfig.dateViewStart.getTime();
+				var nETime = _settingConfig.dateViewEnd.getTime();
+				var nWTime = _settingConfig.fnTime(jedo.gantt.VIEW_WIDTH).getTime() - nSTime;
+				var dateViewStart = new Date(nSTime-nWTime);
+				var dateViewEnd = new Date(nSTime);
+				dateViewEnd.setSeconds(dateViewEnd.getSeconds()-1, 0);
+				
+				var nSvgToWidth = _settingConfig.svgWidth+jedo.gantt.VIEW_WIDTH;
+				jedo.svg.changeGanttWidth(_svg, nSvgToWidth);
+				_oGanttContainer.scrollLeft(jedo.gantt.VIEW_WIDTH);
+				
+				var _arrDeferred = [];
+				var _arrPromise = [];
+				var oJedoWorker = {};
+				
+				var nSvgWidth = parseInt(_settingConfig.svgWidth,10);
+				//console.log("nSvgToWidth["+nSvgToWidth+"] nSvgWidth["+nSvgWidth+"]");
+				var nDataViewMode = _settingConfig.dateViewMode;
+				for(var i=0; i<nHeaderLineCount; i++) {
+					
+					_arrDeferred[i] = $.Deferred();
+					
+					var nLineMode = nDataViewMode-(nHeaderLineCount-(i+1));
+					oJedoWorker["jedoWorker"+i] = new Worker("jedo.JedoWorker.js");
+			    	oJedoWorker["jedoWorker"+i].postMessage({
+			    		"cmd": "SettingAddHeaderGanttData",
+			    		"options": _options,
+			    		"dateViewStart": dateViewStart,
+						"dateViewEnd": dateViewEnd,
+			    		"indexLine": i,
+			    		"lineMode": nLineMode,
+			    		"nToWidth": jedo.gantt.VIEW_WIDTH
+			    	});
+			    	oJedoWorker["jedoWorker"+i].addEventListener("message", function(event){
+			    		switch(event.data.cmd) {
+			    		case "SettingAddHeaderGanttData":
+			    			//console.log("s -- jedo.JedoGantt.prototype.addViewDate - SettingAddHeaderGanttData -- ");
+			    			
+			    			var indexLine = event.data.indexLine;
+			    			var lineMode = event.data.lineMode;
+			    			var headerDatas = event.data.ganttHeaderDatas;
+			    			
+			    			var o = headerDatas[headerDatas.length-1];
+			    			var itemId = o.itemId;
+			    			var svgRectHeader = _svgGanttHeader.select('#'+itemId);
+			    			var svgTextHeader = _svgGanttHeader.select('#'+itemId+"T");
+			    			//console.log("itemId["+itemId+"] svgRectHeader.size():"+svgRectHeader.size());
+			    			
+			    			
+			    			if(0 < svgRectHeader.size()) {
+			    				var elm = headerDatas.pop();
+			    				//console.log("elm.itemId["+elm.itemId+"] elm.x["+elm.x+"]");
+			    				
+			    				var ndx = parseInt(svgRectHeader.attr('ndx'),10)+1;
+			    				var x1 = parseInt(svgRectHeader.attr('x'),10);
+			    				var w1 = parseInt(svgRectHeader.attr('width'),10);
+			    				var x2 = parseInt(elm.x,10);
+			    				var w2 = parseInt(elm.width,10);
+			    				var w  = w1+w2;
+			    				
+			    				svgRectHeader.attr('x', x2);
+			    				
+			    				var className = svgRectHeader.attr("class");
+			    				var sSelect = "rect."+className+"[ndx='"+ndx+"']";
+			    				//console.log("sSelect["+sSelect+"]");
+			    				var nextSvgRectHeader = _svgGanttHeader.select(sSelect);
+			    				//console.log("nextSvgRectHeader.size()["+nextSvgRectHeader.size()+"] "+nextSvgRectHeader.attr("id"));
+			    				if(0 < nextSvgRectHeader.size()) {
+			    					var nx = nextSvgRectHeader.attr('x');
+			    					var nw = nx-x2-1;
+			    					svgRectHeader.attr('width', nw);
+			    				}
+			    				//console.log(" VIEW_WIDTH["+jedo.gantt.VIEW_WIDTH+"] ndx["+ndx+"] x["+x2+"] w["+w+"]");
+			    				if(0 < svgTextHeader.size()) {
+			    					
+			    					nw = svgRectHeader.attr('width');
+				    				svgTextHeader.attr('width', nw)
+				    					.attr('x', function(d){ 
+					    					var bbox = this.getBBox();
+					    					var t = (nw-bbox.width)/2;
+					    					return x1+t; 
+				    					});
+				    			}
+			    			}
+			    			
+			    			jedo.svg.appendHeaderLine(_svgGanttHeader, _options, headerDatas, indexLine, lineMode, 0);
+			    			
+			    			
+			    			_svgGanttHeader.selectAll(headerDatas.map(function(o){
+					    			return "#"+o.itemId+", #"+o.itemId+"T";
+					    		}).join(", ")).each(function(){
+									this.addEventListener("mouseup", function(event){
+										_oJedoGantt.onMouseUpGanttHeader.call(_oJedoGantt, event);
+									}, false);
+									this.addEventListener("mouseover", function(){
+										d3.select(this).style({'stroke-width':2});
+									}, false);
+									this.addEventListener("mouseout", function(){
+										d3.select(this).style({'stroke-width':0});
+									}, false);
+								});
+			    			
+			    			_arrDeferred[indexLine].resolve();
+			    			
+			    			//console.log("e -- jedo.JedoGantt.prototype.addViewDate - SettingAddHeaderGanttData -- ");
+			    			break;
+			    		} 
+			    	}, false);
+			    	
+			    	_arrPromise[_arrPromise.length] = _arrDeferred[i].promise();
+			    	
+				} // for(var i=0; i<nHeaderLineCount; i++) {
+				
+				$.when.apply($, _arrPromise).done(function(){
+					//console.log("s -- appendFirstViewDate _arrPromise -- ");
+					_settingConfig.changeViewData(nSvgToWidth, dateViewStart, new Date(_settingConfig.dateViewEnd.getTime()));
+					deferred.resolve();
+					//console.log("e -- appendFirstViewDate _arrPromise -- ");
+					
+					
+					console.log("complete -- jedo.JedoGantt.prototype.appendFirstViewDate -- ");
+				});
+				console.log("e -- jedo.JedoGantt.prototype.appendFirstViewDate -- ");
+			} finally {
+				_bNowWorking = false;
 				return deferred.promise();
 			}
 		}

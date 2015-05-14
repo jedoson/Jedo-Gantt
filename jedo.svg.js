@@ -189,6 +189,7 @@ Object.defineProperty(jedo.svg, "createRectHeaderLine", {
 				.append('rect')
 				.attr('class', 'rectheaderLine'+indexLine)
 				.attr('id', function(d){ return d.itemId; })
+				.attr('ndx', function(d, i){ return i; })
 				.attr('x', function(d){ return d.x; })
 				.attr('y', function(d){ return d.y; })
 				.attr('width', function(d){ return d.width; })
@@ -215,6 +216,7 @@ Object.defineProperty(jedo.svg, "createRectHeaderLineTransition", {
 				.append('rect')
 				.attr('class', 'rectheaderLine'+indexLine)
 				.attr('id', function(d){ return d.itemId; })
+				.attr('ndx', function(d, i){ return i; })
 				.attr('x', function(d){ return d.x; })
 				.attr('y', function(d){ return d.y; })
 				.attr('width', function(d){ return d.width; })
@@ -248,6 +250,7 @@ Object.defineProperty(jedo.svg, "createTextHeaderLine", {
 				.append('text')
 				.attr('class','textheaderLine'+indexLine)
 				.attr('id', function(d){ return d.itemId+"T"; })
+				.attr('ndx', function(d, i){ return i; })
 				.text(function(d){ return format(d.currentDate); })
 				.attr('x', function(d){ 
 					var bbox = this.getBBox();
@@ -285,6 +288,7 @@ Object.defineProperty(jedo.svg, "createTextHeaderLineTransition", {
 				.append('text')
 				.attr('class','textheaderLine'+indexLine)
 				.attr('id', function(d){ return d.itemId+"T"; })
+				.attr('ndx', function(d, i){ return i; })
 				.text(function(d){
 					return format(d.currentDate); })
 				.attr('x', function(d){ 
@@ -541,13 +545,86 @@ Object.defineProperty(jedo.svg, "setGanttBodyBar", {
 	enumerable: false,
 	configurable: false
 });
-
-
-
-
-
-
-
+Object.defineProperty(jedo.svg, "changeGanttWidth", {
+	get: function() {
+		return function(svg, nSvgToWidth) {
+			
+			svg.attr("width", nSvgToWidth);
+			svg.selectAll('rect.ganttHeaderBg, rect.ganttBodyBg, rect.ganttBodyLine').attr('width',nSvgToWidth);
+			svg.selectAll('rect[class^="rectheaderLine"], text[class^="textheaderLine"],  rect.rectGanttBar, polygon.startMarkGanttBar, polygon.endMarkGanttBar')
+				.attr("x", function(){
+					if(this.nodeName == "rect" || this.nodeName == "text") {
+						return jedo.gantt.VIEW_WIDTH+parseInt(this.getAttribute("x"));
+					}})
+				.attr("points", function(){
+					if(this.nodeName == "polygon") {
+						var sPoints = this.getAttribute("points");
+						var points = sPoints.split(" ").map(function(s){ return s.split(","); });
+						points[0][0] = parseInt(points[0][0]) + jedo.gantt.VIEW_WIDTH;
+						points[1][0] = parseInt(points[1][0]) + jedo.gantt.VIEW_WIDTH;
+						points[2][0] = parseInt(points[2][0]) + jedo.gantt.VIEW_WIDTH;
+						points[3][0] = parseInt(points[3][0]) + jedo.gantt.VIEW_WIDTH;
+						points[4][0] = parseInt(points[4][0]) + jedo.gantt.VIEW_WIDTH;
+						return points.map(function(a){ return a[0]+","+a[1]; }).reduce(
+								function(previousValue, currentValue, index, array) {
+							  return previousValue + " " + currentValue;
+						});
+					}
+				});
+		};
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(jedo.svg, "appendHeaderLine", {
+	get: function() {
+		return function(svgGanttHeader, options, headerDatas, indexLine, lineMode, nSvgWidth) {
+			svgGanttHeader.selectAll('rect.newrectheaderLine')
+			.data(headerDatas)
+			.enter()
+			.append('rect')
+			.attr('class', 'rectheaderLine'+indexLine)
+			.attr('id', function(d){ return d.itemId; })
+			.attr('ndx', function(d, i){ return i; })
+			.attr('x', function(d){
+				return nSvgWidth+d.x; })
+			.attr('y', function(d){ return d.y; })
+			.attr('width', function(d){ return d.width; })
+			.attr('height', function(d){ return d.height; })
+			.style({
+				fill : 'url(#headerGradient)', //'#DA70D6', 
+				stroke : 'navy', 
+				'stroke-width' : 0 });
+		
+		var format = jedo.svg.getTimeFormat(indexLine, lineMode);
+		svgGanttHeader.selectAll('text.newtextheaderLine')
+			.data(headerDatas)
+			.enter()
+			.append('text')
+			.attr('class','textheaderLine'+indexLine)
+			.attr('id', function(d){ return d.itemId+"T"; })
+			.attr('ndx', function(d, i){ return i; })
+			.text(function(d){ return format(d.currentDate); })
+			.attr('x', function(d){ 
+				var bbox = this.getBBox();
+				//console.log(bbox);
+				var t = (d.width-bbox.width)/2;
+				return nSvgWidth+d.x+t; })
+			.attr('y', function(d){ 
+				var bbox = this.getBBox();
+				return d.y + bbox.height + ((d.height-bbox.height)/3); })
+			.attr('width', function(d){ return d.width; })
+			.attr('height', function(d){ return d.height; })
+			.style({
+				'fill': 'blue',
+				'font-family' : "Verdana",
+				'font-size' : options.header.fontSize });
+			
+		}
+	},
+	enumerable: false,
+	configurable: false
+});
 
 
 

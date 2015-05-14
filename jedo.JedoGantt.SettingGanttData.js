@@ -58,40 +58,50 @@ jedo.JedoGantt.SettingGanttData = function (nViewMode, nSvgPrevWidth, nSvgWidth,
 		value: parseInt(nSvgPrevWidth)
 	});
 	
+	var _svgWidth = parseInt(nSvgWidth,10);
 	Object.defineProperty(this, "svgWidth", {
+		get: function() {
+			return _svgWidth;
+		},
 		enumerable: false,
-		configurable: false,
-		writable: false,
-		value: parseInt(nSvgWidth,10)
+		configurable: false
 	});
 	
+	var _dateViewStart = dateViewStart;
 	Object.defineProperty(this, "dateViewStart", {
+		get: function() {
+			return _dateViewStart;
+		},
 		enumerable: false,
-		configurable: false,
-		writable: false,
-		value: dateViewStart
+		configurable: false
 	});
 	
+	var _dateViewEnd = dateViewEnd;
 	Object.defineProperty(this, "dateViewEnd", {
+		get: function() {
+			return _dateViewEnd;
+		},
 		enumerable: false,
-		configurable: false,
-		writable: false,
-		value: dateViewEnd
+		configurable: false
 	});
 
 	
+	var _fnScale = jedo.getFnScale(dateViewStart, dateViewEnd, 0, nSvgWidth);
 	Object.defineProperty(this, "fnScale", {
+		get: function() {
+			return _fnScale;
+		},
 		enumerable: false,
-		configurable: false,
-		writable: false,
-		value: jedo.getFnScale(dateViewStart, dateViewEnd, 0, nSvgWidth)
+		configurable: false
 	});
 	
+	var _fnTime = jedo.getFnTime(dateViewStart, dateViewEnd, 0, nSvgWidth);
 	Object.defineProperty(this, "fnTime", {
+		get: function() {
+			return _fnTime;
+		},
 		enumerable: false,
-		configurable: false,
-		writable: false,
-		value: jedo.getFnTime(dateViewStart, dateViewEnd, 0, nSvgWidth)
+		configurable: false
 	});
 	
 	Object.defineProperty(this, "scrollLeft", {
@@ -143,14 +153,33 @@ jedo.JedoGantt.SettingGanttData = function (nViewMode, nSvgPrevWidth, nSvgWidth,
 		configurable: false
 	});
 	
+	var _keyString = jedo.JedoGantt.getGanttDataKeyString(nViewMode,nSvgPrevWidth,nSvgWidth);
 	Object.defineProperty(this, "keyString", {
+		get: function() {
+			return _keyString;
+		},
 		enumerable: false,
-		configurable: false,
-		writable: false,
-		value: jedo.JedoGantt.getGanttDataKeyString(nViewMode,nSvgPrevWidth,nSvgWidth)
+		configurable: false
 	});
 	
-	
+	Object.defineProperty(this, "changeViewData", {
+		get: function() {
+			
+			return function(nToSvgWidth, dateToViewStart, dateToViewEnd) {
+				
+				_svgWidth = nToSvgWidth;
+				_dateViewStart = dateToViewStart;
+				_dateViewEnd = dateToViewEnd;
+				
+				_fnScale = jedo.getFnScale(dateToViewStart, dateToViewEnd, 0, nToSvgWidth);
+				_fnTime = jedo.getFnTime(dateToViewStart, dateToViewEnd, 0, nToSvgWidth);
+				
+				_keyString = jedo.JedoGantt.getGanttDataKeyString(this.dateViewMode, this.svgPrevWidth, nToSvgWidth);
+			}
+		},
+		enumerable: false,
+		configurable: false
+	});
 };
 
 }//if(!jedo.JedoGantt.hasOwnProperty("SettingGanttData")) {

@@ -323,6 +323,48 @@ Object.defineProperty(jedo, "getHeaderItemID", {
 	enumerable: false,
 	configurable: false
 });
+Object.defineProperty(jedo, "nextHeaderItemID", {
+	get: function() {
+		return function(itemId) {
+			
+			var startWith = "";
+			var mark = "";
+			var no = -1;
+			for(var i = itemId.length-1; 0 <= i; i--) {
+				var c = itemId.charAt(i);
+				if(Number.isNaN(c)) {
+					startWith = itemId.substring(0, i+1);
+					itemId.substring(i+1);
+					mark = c;
+					break;
+				}
+			}
+			console.log("startWith["+startWith+"] mark["+mark+"] no["+no+"]");
+			
+			
+			if(mark == "Q") {
+				
+				
+				
+				
+			} else if(mark == "M") {
+				
+				
+				
+				
+			} else if(mark == "W") {
+				
+				
+				
+			}
+			
+			
+		};
+	},
+	enumerable: false,
+	configurable: false
+});
+
 Object.defineProperty(jedo, "isInChildGantt", {
 	get: function() {
 		return function (id, ganttData) {

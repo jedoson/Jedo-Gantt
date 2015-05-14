@@ -251,7 +251,13 @@ jedo.JedoGantt.SettingConfig = function () {
 	
 	
 	
-	
+	Object.defineProperty(this, "changeViewData", {
+		get: function() {
+			return _settingGanttData[_arrGanttDataKey[_arrGanttDataKey.length-1]].changeViewData;
+		},
+		enumerable: false,
+		configurable: false
+	});
 	
 	
 	
