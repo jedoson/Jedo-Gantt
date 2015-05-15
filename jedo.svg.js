@@ -179,6 +179,39 @@ Object.defineProperty(jedo.svg, "createGanttHeaderBack", {
 	enumerable: false,
 	configurable: false
 });
+Object.defineProperty(jedo.svg, "createGanttHeaderDebug", {
+	get: function() {
+		return function(svgGanttHeader, x, y, w, h) {
+			
+			svgGanttHeader.append('rect')
+						.attr('class', 'ganttHeaderDebug')
+						.attr('x', x)
+						.attr('y', y)
+						.attr('width', w)
+						.attr('height', h)
+						.style({
+							'fill': 'red',
+						    'stroke': 'navy',
+						    'stroke-width': 0
+						});
+			var ganttHeaderDebug = svgGanttHeader.select("rect.ganttHeaderDebug");
+			var node = ganttHeaderDebug.node();
+			node.addEventListener("mouseover", function(event){
+				d3.select(this).style({
+				    'stroke-width': 1
+				});
+			},false);
+			node.addEventListener("mouseout", function(event){
+				d3.select(this).style({
+				    'stroke-width': 0
+				});
+			},false);
+			return ganttHeaderDebug;
+		};
+	},
+	enumerable: false,
+	configurable: false
+});
 Object.defineProperty(jedo.svg, "createRectHeaderLine", {
 	get: function() {
 		return function(svgGanttHeader, indexLine, lineMode, arr) {
@@ -545,26 +578,50 @@ Object.defineProperty(jedo.svg, "setGanttBodyBar", {
 	enumerable: false,
 	configurable: false
 });
-Object.defineProperty(jedo.svg, "changeGanttWidth", {
+Object.defineProperty(jedo.svg, "appendGanttWidth", {
 	get: function() {
-		return function(svg, nSvgToWidth) {
+		return function(svg, nAppendWidth) {
 			
+			var nSvgToWidth = parseInt(svg.attr("width"),10)+nAppendWidth;
 			svg.attr("width", nSvgToWidth);
 			svg.selectAll('rect.ganttHeaderBg, rect.ganttBodyBg, rect.ganttBodyLine').attr('width',nSvgToWidth);
+			return nSvgToWidth;
+		};
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(jedo.svg, "insertGanttWidth", {
+	get: function() {
+		return function(svg, nInsertWidth) {
+			
+			var nSvgToWidth = parseInt(svg.attr("width"),10)+nInsertWidth;
+			svg.attr("width", nSvgToWidth);
+			svg.selectAll('rect.ganttHeaderBg, rect.ganttBodyBg, rect.ganttBodyLine').attr('width',nSvgToWidth);
+			jedo.svg.moveGanttObject(svg, nInsertWidth);
+			return nSvgToWidth;
+		};
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(jedo.svg, "moveGanttObject", {
+	get: function() {
+		return function(svg, nMoveWidth) {
 			svg.selectAll('rect[class^="rectheaderLine"], text[class^="textheaderLine"],  rect.rectGanttBar, polygon.startMarkGanttBar, polygon.endMarkGanttBar')
 				.attr("x", function(){
 					if(this.nodeName == "rect" || this.nodeName == "text") {
-						return jedo.gantt.VIEW_WIDTH+parseInt(this.getAttribute("x"));
+						return nMoveWidth+parseInt(this.getAttribute("x"));
 					}})
 				.attr("points", function(){
 					if(this.nodeName == "polygon") {
 						var sPoints = this.getAttribute("points");
 						var points = sPoints.split(" ").map(function(s){ return s.split(","); });
-						points[0][0] = parseInt(points[0][0]) + jedo.gantt.VIEW_WIDTH;
-						points[1][0] = parseInt(points[1][0]) + jedo.gantt.VIEW_WIDTH;
-						points[2][0] = parseInt(points[2][0]) + jedo.gantt.VIEW_WIDTH;
-						points[3][0] = parseInt(points[3][0]) + jedo.gantt.VIEW_WIDTH;
-						points[4][0] = parseInt(points[4][0]) + jedo.gantt.VIEW_WIDTH;
+						points[0][0] = parseInt(points[0][0]) + nMoveWidth;
+						points[1][0] = parseInt(points[1][0]) + nMoveWidth;
+						points[2][0] = parseInt(points[2][0]) + nMoveWidth;
+						points[3][0] = parseInt(points[3][0]) + nMoveWidth;
+						points[4][0] = parseInt(points[4][0]) + nMoveWidth;
 						return points.map(function(a){ return a[0]+","+a[1]; }).reduce(
 								function(previousValue, currentValue, index, array) {
 							  return previousValue + " " + currentValue;
@@ -578,6 +635,7 @@ Object.defineProperty(jedo.svg, "changeGanttWidth", {
 });
 Object.defineProperty(jedo.svg, "appendHeaderLine", {
 	get: function() {
+		
 		return function(svgGanttHeader, options, headerDatas, indexLine, lineMode, nSvgWidth) {
 			svgGanttHeader.selectAll('rect.newrectheaderLine')
 			.data(headerDatas)

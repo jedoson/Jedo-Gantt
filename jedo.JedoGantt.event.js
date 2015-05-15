@@ -33,6 +33,7 @@ Object.defineProperty(jedo.JedoGantt.prototype, "onScrollTimeFixedElement", {
 			var nSL = _oGanttContainer.scrollLeft();
 			_svg.select('g.ganttHeader').attr('transform', 'translate(0,'+nST+')');
 			_svg.select('rect.ganttHeaderBack').attr('x', nSL+10);
+			_svg.select('rect.ganttHeaderDebug').attr('x', nSL+50);
 		}
 	},
 	enumerable: false,
@@ -47,41 +48,52 @@ Object.defineProperty(jedo.JedoGantt.prototype, "onScrollGanttContainer", {
 		var _settingConfig = _oJedoGantt.settingConfig;
 		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
 		
+		var bFnWorking = false;
 		var promise = null;
-		
-		
 		return function(event){
 			
 			if(promise == null) {
-				if(_settingConfig.svgWidth < (jedo.gantt.VIEW_WIDTH + 50)) return;
+				var nSvgWidth = parseInt(_svg.attr("width"),10);
+				if(nSvgWidth < (jedo.gantt.VIEW_WIDTH + 50)) return;
 				
+				if(bFnWorking) return;
+				bFnWorking = true;
 				//console.log("s -- jedo.JedoGantt.prototype.onScrollGanttContainer scroll -- ");
-				
-				var nST = _oGanttContainer.scrollTop();
-				var nSL = _oGanttContainer.scrollLeft();
-
-				var dateScrollLeft = _settingConfig.fnTime(nSL);
-				//console.log("dateScrollLeft["+dateScrollLeft.toISOString()+"]");
-				
-				_settingConfig.scrollLeft = nSL;
-				_settingConfig.viewStartDate = dateScrollLeft;
-				
-				var nSumScroll = jedo.gantt.VIEW_WIDTH+nSL;
-				//console.log("nSumScroll["+nSumScroll+"] _settingConfig.svgWidth["+_settingConfig.svgWidth+"]");
-				
-				// 사용자가 스크롤 하여 최우측으로 이동
-				if(nSL === 0) {
-					_oGanttContainer.scrollLeft(3);
-					promise = _oJedoGantt.appendFirstViewDate();
-				} else if(_settingConfig.svgWidth < (nSumScroll+10)) {
-					promise = _oJedoGantt.appendLastViewDate();
+				try {
+					var nST = _oGanttContainer.scrollTop();
+					var nSL = _oGanttContainer.scrollLeft();
+	
+					var dateScrollLeft = _settingConfig.fnTime(nSL);
+					//console.log("dateScrollLeft["+dateScrollLeft.toISOString()+"]");
+					
+					_settingConfig.scrollLeft = nSL;
+					_settingConfig.viewStartDate = dateScrollLeft;
+					
+					var nSumScroll = jedo.gantt.VIEW_WIDTH+nSL;
+					//console.log("nSumScroll["+nSumScroll+"] _settingConfig.svgWidth["+_settingConfig.svgWidth+"]");
+					
+					// 사용자가 스크롤 하여 최우측으로 이동
+					if(nSvgWidth+10 < jedo.gantt.MAX_VIEW_WIDTH) {
+						if(nSL === 0) {
+							_oGanttContainer.scrollLeft(jedo.gantt.APPEND_VIEW_WIDTH);
+							promise = _oJedoGantt.appendFirstViewDate();
+						} else if(_settingConfig.svgWidth < (nSumScroll+10)) {
+							promise = _oJedoGantt.appendLastViewDate();
+						}
+						if(promise) {
+							$.when(promise).done(function(){
+								setTimeout(function(){ 
+									promise = null; 
+									console.log("end -- jedo.JedoGantt.prototype.onScrollGanttContainer scroll -- ");
+								}, 1000);
+							});
+						}
+					}
+				} finally {
+					bFnWorking = false;
 				}
-				
-				$.when(promise).done(function(){
-					promise = null;
-				});
 			} else {
-				
+				event.stopPropagation();
 				event.preventDefault();
 			}
 			//console.log("e -- jedo.JedoGantt.prototype.onScrollGanttContainer scroll -- ");
@@ -315,24 +327,63 @@ Object.defineProperty(jedo.JedoGantt.prototype, "onMouseUpGanttHeader", {
 		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
 		
 		return function(event) {
-			//console.log("s -- jedo.JedoGantt.prototype.onMouseUpGanttHeader  --");
+			if(event.ctrlKey) {
+				console.log("s -- jedo.JedoGantt.prototype.onMouseUpGanttHeader event.ctrlKey["+event.ctrlKey+"]  --");
 			
-			var svgPoint = jedo.JedoGantt.getSVGCursorPoint(_svg, event.clientX, event.clientY);
-			//var nClickPer = (svgPoint.x*100)/_settingConfig.svgWidth;
-			//console.log("nClickPer["+nClickPer+"]");
-			var oClickDate = _settingConfig.fnTime(svgPoint.x);
-			console.log("oClickDate["+oClickDate.toISOString()+"]");
-			
-			var nToDateViewMode = jedo.JedoGantt.getZoomInViewMode(_settingConfig.dateViewMode);
-			//console.log("dateViewMode["+_settingConfig.dateViewModeString+"] nToDateViewMode["+jedo.VIEW_MODE.toString(nToDateViewMode)+"]");
-			var nSvgToWidth = jedo.JedoGantt.getChangeSvgWidth(nToDateViewMode, _settingConfig, _options, _svg);
-			//console.log("svgWidth["+_settingConfig.svgWidth+"] nSvgToWidth["+nSvgToWidth+"]");
-			_settingConfig.pushGanttWidth(nSvgToWidth);
-			
-			var promise = _oJedoGantt.changeGanttViewMode(svgPoint, nToDateViewMode, nSvgToWidth);
-			_oJedoGantt.changeScrollGanttContainer(nSvgToWidth, oClickDate, event.clientX);
-			
-			//console.log("e -- jedo.JedoGantt.prototype.onMouseUpGanttHeader  --");
+				var svgPoint = jedo.JedoGantt.getSVGCursorPoint(_svg, event.clientX, event.clientY);
+				//var nClickPer = (svgPoint.x*100)/_settingConfig.svgWidth;
+				//console.log("nClickPer["+nClickPer+"]");
+				var oClickDate = _settingConfig.fnTime(svgPoint.x);
+				console.log("oClickDate["+oClickDate.toISOString()+"]");
+				
+				var nToDateViewMode = jedo.JedoGantt.getZoomInViewMode(_settingConfig.dateViewMode);
+				//console.log("dateViewMode["+_settingConfig.dateViewModeString+"] nToDateViewMode["+jedo.VIEW_MODE.toString(nToDateViewMode)+"]");
+				var nSvgToWidth = jedo.JedoGantt.getChangeSvgWidth(nToDateViewMode, _settingConfig, _options, _svg);
+				console.log("svgWidth["+_settingConfig.svgWidth+"] nSvgToWidth["+nSvgToWidth+"]");
+				_settingConfig.pushGanttWidth(nSvgToWidth);
+				
+				var promise = _oJedoGantt.changeGanttViewMode(svgPoint, nToDateViewMode, nSvgToWidth);
+				_oJedoGantt.changeScrollGanttContainer(nSvgToWidth, oClickDate, event.clientX);
+				
+				console.log("e -- jedo.JedoGantt.prototype.onMouseUpGanttHeader  --");
+			}
+		};
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(jedo.JedoGantt.prototype, "onMouseDownGanttHeader", {
+	get: function() {
+		
+		var _oJedoGantt = this;
+		var _svg = _oJedoGantt.svg;
+		var _options = _oJedoGantt.options;
+		var _settingConfig = _oJedoGantt.settingConfig;
+		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
+		
+		return function(event) {
+			console.log("event.target["+event.target.getAttribute("id")+"]  event.currentTarget["+event.currentTarget.getAttribute("id")+"]");
+			var svgElement = _svg.select("#"+event.target.getAttribute("id"));
+			if(svgElement) {
+				
+				console.log("svgElement["+svgElement.node().getAttribute("id")+"] dreag");
+				
+				var drag = d3.behavior.drag()
+						.on("dragstart", function() {
+					    	
+					    	
+					    	
+					    	
+					    })
+					    .on("drag", function() {
+					      
+					      console.log("d3.event.sourceEvent.pageX["+d3.event.sourceEvent.pageX+"] d3.event.sourceEvent.pageY["+d3.event.sourceEvent.pageY+"]");
+					      svgElement.attr("x", d3.event.sourceEvent.pageX).attr("y", d3.event.sourceEvent.pageY);
+					      
+					      
+					    });
+				svgElement.call(drag);
+			}
 		};
 	},
 	enumerable: false,
@@ -401,7 +452,70 @@ Object.defineProperty(jedo.JedoGantt.prototype, "onMouseUpGanttLine", {
 	configurable: false
 });
 
-
+Object.defineProperty(jedo.JedoGantt.prototype, "onMouseDownHeaderDebug", {
+	get: function() {
+		
+		var _oJedoGantt = this;
+		var _svg = _oJedoGantt.svg;
+		var _settingConfig = _oJedoGantt.settingConfig;
+		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
+		
+		return function(event) {
+			
+			var svgElement = _svg.select(event.currentTarget);
+			if(svgElement) {
+				var observer = new MutationObserver(function(mutations) {
+				mutations.forEach(function(mutation) {
+					
+					console.log("Headerline2_Y2014_W6 "+svgElement.attr("id")+" svgElement.width["+svgElement.attr("width")+"]");
+						
+					});
+				});
+				observer.observe(svgElement.node(), { 
+				    attributes: true,
+				    attributeFilter: ["width"],
+				    attributeOldValue: false,
+				    childList: false
+				});
+			}
+			
+		}
+	},
+	enumerable: false,
+	configurable: false
+});	
+Object.defineProperty(jedo.JedoGantt.prototype, "debugObject", {
+	get: function() {
+		
+		var _oJedoGantt = this;
+		var _svg = _oJedoGantt.svg;
+		var _settingConfig = _oJedoGantt.settingConfig;
+		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
+		
+		return function(sSvgElementId) {
+			
+			var svgElement = _svg.select("#"+sSvgElementId);
+			if(svgElement) {
+				var observer = new MutationObserver(function(mutations) {
+				mutations.forEach(function(mutation) {
+					
+					console.log(svgElement.attr("id")+" svgElement.width["+svgElement.attr("width")+"]");
+						
+					});
+				});
+				observer.observe(svgElement.node(), { 
+				    attributes: true,
+				    attributeFilter: ["width"],
+				    attributeOldValue: false,
+				    childList: false
+				});
+			}
+			
+		}
+	},
+	enumerable: false,
+	configurable: false
+});	
 
 
 
