@@ -18,140 +18,68 @@
 	<script type="text/javascript" src="./jedo.svg.js"></script>
 	<script type="text/javascript" src="./jedo.CapturedGanttBar.js"></script>
 	<script type="text/javascript" src="./jedo.JedoGantt.js"></script>
+	<script type="text/javascript" src="./jedo.JedoGantt.prototype.js"></script>
+	<script type="text/javascript" src="./jedo.JedoGantt.GanttHeader.js"></script>
+	<script type="text/javascript" src="./jedo.JedoGantt.GanttHeader.prototype.js"></script>
+	<script type="text/javascript" src="./jedo.JedoGantt.GanttBody.js"></script>
+	<script type="text/javascript" src="./jedo.JedoGantt.GanttBody.prototype.js"></script>
 	<script type="text/javascript" src="./jedo.JedoGantt.SettingGanttData.js"></script>
 	<script type="text/javascript" src="./jedo.JedoGantt.SettingConfig.js"></script>
-	<script type="text/javascript" src="./jedo.JedoGantt.prototype.js"></script>
-	<script type="text/javascript" src="./jedo.JedoGantt.event.js"></script>
 	<script type="text/javascript" src="./jedoGantt.js"></script>
 </head>
 <body>
 	<div id="myGanttContainer"></div>
 </body>
-<script>
-"use strict";
+<script type="text/javascript">
+	"use strict";
+	if(typeof(Worker) === "undefined") {
+		throw new Error("javascript Worker need!");
+	}
 	$( document ).ready(function() {
-		
-        $("#myGanttContainer").jedoGantt({
-        	
-        	startGanttDate : new Date(Date.UTC(2013, 0, 1)),
-        	endGanttDate   : new Date(Date.UTC(2014, 1, 3)),
-        	
-        	ganttData :  [
-			    {"id": "1",  "title": "Phase 1 - Strategic Plan",                                                              "progress": "14%",  "startDate": new Date(Date.UTC(2013,1,24,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,28,9,0,0,0))},
-			    {"id": "2",  "title": "Self-Assessment",                                                      "parentId":"1",  "progress": "25%",  "startDate": new Date(Date.UTC(2013,1,24,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,2,9,0,0,0))},
-			    {"id": "3",  "title": "Define business vision",                                               "parentId":"2",  "progress": "0%",   "startDate": new Date(Date.UTC(2013,1,25,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,1,25,10,0,0,0)), "connectId": "4", "connectorType": "FinishStart"},
-			    {"id": "4",  "title": "Identify available skills, information and support",                   "parentId":"2",  "progress": "0%",   "startDate": new Date(Date.UTC(2013,1,26,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,1,26,10,0,0,0)), "connectId": "5", "connectorType": "FinishStart"},
-			    {"id": "5",  "title": "Decide whether to proceed",                                            "parentId":"2",  "progress": "0%",   "startDate": new Date(Date.UTC(2013,1,29,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,1,29,10,0,0,0)), "connectId": "7", "connectorType": "FinishStart"},
-			    {"id": "6",  "title": "Define the Opportunity",                                               "parentId":"1",  "progress": "27%",  "startDate": new Date(Date.UTC(2013,1,29,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,14,9,0,0,0))},
-			    {"id": "7",  "title": "Research the market and competition",                                  "parentId":"6",  "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,1,1,0,0,0)),   "endDate": new Date(Date.UTC(2013,2,1,10,0,0,0)),  "connectId": "8", "connectorType": "FinishStart"},
-			    {"id": "8",  "title": "Interview owners of similar businesses",                               "parentId":"6",  "progress": "60%",  "startDate": new Date(Date.UTC(2013,2,1,9,0,0,0)),   "endDate": new Date(Date.UTC(2013,2,8,9,0,0,0)),   "connectId": "9", "connectorType": "FinishStart"},
-			    {"id": "9",  "title": "Identify needed resources",                                            "parentId":"6",  "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,9,1,0,0,0)),   "endDate": new Date(Date.UTC(2013,2,10,10,0,0,0)), "connectId": "10", "connectorType": "FinishStart"},
-			    {"id": "10", "title": "Identify operating cost elements",                                     "parentId":"6",  "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,11,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,14,10,0,0,0)), "connectId": "12", "connectorType": "FinishStart"},
-			    {"id": "11", "title": "Evaluate Business Approach",                                           "parentId":"1",  "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,15,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,18,10,0,0,0))},
-			    {"id": "12", "title": "Define new entity requirements",                                       "parentId":"11", "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,15,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,15,10,0,0,0)), "connectId": "17", "connectorType": "FinishStart"},
-			    {"id": "13", "title": "Identify on-going business purchase opportunities",                    "parentId":"11", "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,16,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,16,10,0,0,0)), "connectId": "14", "connectorType": "FinishStart"},
-			    {"id": "14", "title": "Research franchise possibilities",                                     "parentId":"11", "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,17,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,17,10,0,0,0)), "connectId": "15", "connectorType": "FinishStart"},
-			    {"id": "15", "title": "Summarize business approach",                                          "parentId":"11", "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,18,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,18,10,0,0,0)), "connectId": "21", "connectorType": "FinishStart"},
-			    {"id": "16", "title": "Evaluate Potential Risks and Rewards",                                 "parentId":"1",  "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,16,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,25,10,0,0,0))},
-			    {"id": "17", "title": "Assess market size and stability",                                     "parentId":"16", "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,16,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,17,10,0,0,0)), "connectId": "18", "connectorType": "FinishStart"},
-			    {"id": "18", "title": "Estimate the competition",                                             "parentId":"16", "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,18,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,18,10,0,0,0)), "connectId": "19", "connectorType": "FinishStart"},
-			    {"id": "19", "title": "Assess needed resource availability",                                  "parentId":"16", "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,23,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,24,10,0,0,0)), "connectId": "20", "connectorType": "FinishStart"},
-			    {"id": "20", "title": "Evaluate realistic initial market share",                              "parentId":"16", "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,25,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,25,10,0,0,0))},
-			    {"id": "21", "title": "Determine financial requirements",                                     "parentId":"16", "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,21,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,22,10,0,0,0)), "connectId": "22", "connectorType": "FinishStart"},
-			    {"id": "22", "title": "Review personal suitability",                                          "parentId":"16", "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,23,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,23,10,0,0,0)), "connectId": "23", "connectorType": "FinishStart"},
-			    {"id": "23", "title": "Evaluate initial profitability",                                       "parentId":"16", "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,24,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,24,10,0,0,0)), "connectId": "24", "connectorType": "FinishStart"},
-			    {"id": "24", "title": "Review and modify the strategic plan",                                 "parentId":"1",  "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,25,1,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,28,11,0,0,0)), "connectId": "25", "connectorType": "FinishStart"},
-			    {"id": "25", "title": "Confirm decision to proceed",                                          "parentId":"1",  "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,28,11,0,0,0)), "endDate": new Date(Date.UTC(2013,2,28,11,0,0,0)), "connectId": "28", "connectorType": "FinishStart"},
-			    {"id": "26", "title": "Phase 2 - Define the Business Opportunity",                                             "progress": "19%",  "startDate": new Date(Date.UTC(2013,2,28,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,3,9,0,0,0))},
-			    {"id": "27", "title": "Define the Market",                                                    "parentId":"26", "progress": "28%",  "startDate": new Date(Date.UTC(2013,2,28,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,3,14,9,0,0,0))},
-			    {"id": "28", "title": "Access available information",                                         "parentId":"27", "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,29,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,29,11,0,0,0)), "connectId": "35", "connectorType": "StartStart"},
-			    {"id": "29", "title": "Create market analysis plan",                                          "parentId":"27", "progress": "0%",   "startDate": new Date(Date.UTC(2013,2,30,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,31,11,0,0,0))},
-			    {"id": "30", "title": "Implement market analysis plan",                                       "parentId":"27", "progress": "40%",  "startDate": new Date(Date.UTC(2013,2,31,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,3,7,9,0,0,0)),   "connectId": "31", "connectorType": "FinishStart"},
-			    {"id": "31", "title": "Identify competition",                                                 "parentId":"27", "progress": "60%",  "startDate": new Date(Date.UTC(2013,3,7,9,0,0,0)),   "endDate": new Date(Date.UTC(2013,3,11,9,0,0,0)),  "connectId": "32", "connectorType": "FinishStart"},
-			    {"id": "32", "title": "Summarize the market",                                                 "parentId":"27", "progress": "0%",   "startDate": new Date(Date.UTC(2013,3,12,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,3,13,11,0,0,0)), "connectId": "33", "connectorType": "FinishStart"},
-			    {"id": "33", "title": "Identify target market niche",                                         "parentId":"27", "progress": "0%",   "startDate": new Date(Date.UTC(2013,3,14,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,3,14,11,0,0,0)), "connectId": "35", "connectorType": "StartStart"},
-			    {"id": "34", "title": "Identify Needed Materials and Supplies",                               "parentId":"26", "progress": "0%",   "startDate": new Date(Date.UTC(2013,3,14,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,3,22,11,0,0,0))},
-			    {"id": "35", "title": "Select a business approach (from 'Evaluate Business Approach' above)", "parentId":"34", "progress": "0%",   "startDate": new Date(Date.UTC(2013,3,14,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,3,15,11,0,0,0)), "connectId": "36", "connectorType": "FinishStart"},
-			    {"id": "36", "title": "Identify management staff resources",                                  "parentId":"34", "progress": "0%",   "startDate": new Date(Date.UTC(2013,3,18,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,3,18,11,0,0,0)), "connectId": "37", "connectorType": "FinishStart"},
-			    {"id": "37", "title": "Identify staffing requirements",                                       "parentId":"34", "progress": "0%",   "startDate": new Date(Date.UTC(2013,3,19,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,3,19,11,0,0,0)), "connectId": "38", "connectorType": "FinishStart"},
-			    {"id": "38", "title": "Identify needed raw materials",                                        "parentId":"34", "progress": "0%",   "startDate": new Date(Date.UTC(2013,3,20,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,3,20,11,0,0,0)), "connectId": "39", "connectorType": "FinishStart"},
-			    {"id": "39", "title": "Identify needed utilities",                                            "parentId":"34", "progress": "0%",   "startDate": new Date(Date.UTC(2013,3,21,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,3,21,11,0,0,0)), "connectId": "40", "connectorType": "FinishStart"},
-			    {"id": "40", "title": "Summarize operating expenses and financial projections",               "parentId":"34", "progress": "0%",   "startDate": new Date(Date.UTC(2013,3,22,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,3,22,11,0,0,0)), "connectId": "42", "connectorType": "FinishStart"},
-			    {"id": "41", "title": "Evaluate Potential Risks and Rewards",                                 "parentId":"26", "progress": "17%",  "startDate": new Date(Date.UTC(2013,3,24,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,2,9,0,0,0))},
-			    {"id": "42", "title": "Assess market size and stability",                                     "parentId":"41", "progress": "50%",  "startDate": new Date(Date.UTC(2013,3,24,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,3,26,9,0,0,0)),  "connectId": "43", "connectorType": "FinishStart"},
-			    {"id": "43", "title": "Assess needed resources availability",                                 "parentId":"41", "progress": "0%",   "startDate": new Date(Date.UTC(2013,3,27,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,3,28,11,0,0,0)), "connectId": "44", "connectorType": "FinishStart"},
-			    {"id": "44", "title": "Forecast financial returns",                                           "parentId":"41", "progress": "0%",   "startDate": new Date(Date.UTC(2013,3,29,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,2,11,0,0,0)),  "connectId": "45", "connectorType": "FinishStart"},
-			    {"id": "45", "title": "Review and modify the business opportunity",                           "parentId":"26", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,3,2,0,0,0)),   "endDate": new Date(Date.UTC(2013,4,3,11,0,0,0)),  "connectId": "46", "connectorType": "FinishStart"},
-			    {"id": "46", "title": "Confirm decision to proceed",                                          "parentId":"26", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,3,11,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,3,11,0,0,0)),  "connectId": "49", "connectorType": "FinishStart"},
-			    {"id": "47", "title": "Phase 3 - Plan for Action",                                                             "progress": "17%",  "startDate": new Date(Date.UTC(2013,4,3,9,0,0,0)),   "endDate": new Date(Date.UTC(2013,5,1,9,0,0,0))},
-			    {"id": "48", "title": "Develop Detailed 5-Year Business Plan",                                "parentId":"47", "progress": "17%",  "startDate": new Date(Date.UTC(2013,4,3,9,0,0,0)),   "endDate": new Date(Date.UTC(2013,5,1,9,0,0,0))},
-			    {"id": "49", "title": "Describe the vision and opportunity",                                  "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,4,2,0,0,0)),   "endDate": new Date(Date.UTC(2013,4,4,11,0,0,0)),  "connectId": "50", "connectorType": "FinishStart"},
-			    {"id": "50", "title": "List assumptions",                                                     "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,5,2,0,0,0)),   "endDate": new Date(Date.UTC(2013,4,5,11,0,0,0)),  "connectId": "51", "connectorType": "FinishStart"},
-			    {"id": "51", "title": "Describe the market",                                                  "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,6,2,0,0,0)),   "endDate": new Date(Date.UTC(2013,4,6,11,0,0,0)),  "connectId": "52", "connectorType": "FinishStart"},
-			    {"id": "52", "title": "Describe the new business",                                            "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,9,2,0,0,0)),   "endDate": new Date(Date.UTC(2013,4,9,11,0,0,0)),  "connectId": "53", "connectorType": "FinishStart"},
-			    {"id": "53", "title": "Describe strengths, weaknesses, assets and threats",                   "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,10,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,10,11,0,0,0)), "connectId": "54", "connectorType": "FinishStart"},
-			    {"id": "54", "title": "Estimate sales volume during startup period",                          "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,11,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,11,11,0,0,0)), "connectId": "55", "connectorType": "FinishStart"},
-			    {"id": "55", "title": "Forecast operating costs",                                             "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,12,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,12,11,0,0,0)), "connectId": "56", "connectorType": "FinishStart"},
-			    {"id": "56", "title": "Establish pricing strategy",                                           "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,13,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,13,11,0,0,0)), "connectId": "57", "connectorType": "FinishStart"},
-			    {"id": "57", "title": "Forecast revenue",                                                     "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,16,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,16,11,0,0,0)), "connectId": "58", "connectorType": "FinishStart"},
-			    {"id": "58", "title": "X",                                                                    "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,17,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,18,11,0,0,0)), "connectId": "59", "connectorType": "FinishStart"},
-			    {"id": "59", "title": "Develop break-even analysis",                                          "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,19,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,19,11,0,0,0)), "connectId": "60", "connectorType": "FinishStart"},
-			    {"id": "60", "title": "Develop cash-flow projection",                                         "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,20,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,20,11,0,0,0)), "connectId": "61", "connectorType": "FinishStart"},
-			    {"id": "61", "title": "Identify licensing and permitting requirements",                       "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,23,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,23,11,0,0,0)), "connectId": "62", "connectorType": "FinishStart"},
-			    {"id": "62", "title": "Develop startup plan",                                                 "parentId":"48", "progress": "100%", "startDate": new Date(Date.UTC(2013,4,24,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,25,11,0,0,0)), "connectId": "63", "connectorType": "FinishStart"},
-			    {"id": "63", "title": "Develop sales and marketing strategy",                                 "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,26,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,26,11,0,0,0)), "connectId": "64", "connectorType": "FinishStart"},
-			    {"id": "64", "title": "Develop distribution structure",                                       "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,4,27,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,27,11,0,0,0)), "connectId": "65", "connectorType": "FinishStart"},
-			    {"id": "65", "title": "Describe risks and opportunities",                                     "parentId":"48", "progress": "20%",  "startDate": new Date(Date.UTC(2013,4,29,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,4,31,9,0,0,0)),  "connectId": "66", "connectorType": "FinishStart"},
-			    {"id": "66", "title": "Publish the business plan",                                            "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,1,2,0,0,0)),   "endDate": new Date(Date.UTC(2013,5,1,11,0,0,0)),  "connectId": "67", "connectorType": "FinishStart"},
-			    {"id": "67", "title": "Confirm decision to proceed",                                          "parentId":"48", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,1,11,0,0,0)),  "endDate": new Date(Date.UTC(2013,5,1,11,0,0,0)),  "connectId": "69", "connectorType": "FinishStart"},
-			    {"id": "68", "title": "Phase 4 - Proceed With Startup Plan",                                                   "progress": "24%",  "startDate": new Date(Date.UTC(2013,5,1,9,0,0,0)),   "endDate": new Date(Date.UTC(2013,7,24,9,0,0,0))},
-			    {"id": "69", "title": "Choose a location",                                                    "parentId":"68", "progress": "36%",  "startDate": new Date(Date.UTC(2013,5,1,9,0,0,0)),   "endDate": new Date(Date.UTC(2013,5,2,9,0,0,0)),   "connectId": "72", "connectorType": "FinishStart"},
-			    {"id": "70", "title": "Establish Business Structure",                                         "parentId":"68", "progress": "14%",  "startDate": new Date(Date.UTC(2013,5,2,9,0,0,0)),   "endDate": new Date(Date.UTC(2013,6,11,9,0,0,0))},
-			    {"id": "71", "title": "Choose a title",                                                       "parentId":"70", "progress": "33%",  "startDate": new Date(Date.UTC(2013,5,2,9,0,0,0)),   "endDate": new Date(Date.UTC(2013,5,6,9,0,0,0))},
-			    {"id": "72", "title": "Identify implications",                                                "parentId":"71", "progress": "40%",  "startDate": new Date(Date.UTC(2013,5,2,9,0,0,0)),   "endDate": new Date(Date.UTC(2013,5,3,9,0,0,0)),   "connectId": "73", "connectorType": "FinishStart"},
-			    {"id": "73", "title": "Research title availability",                                          "parentId":"71", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,6,2,0,0,0)),   "endDate": new Date(Date.UTC(2013,5,6,11,0,0,0)),  "connectId": "87", "connectorType": "StartStart"},
-			    {"id": "74", "title": "Choose a Bank",                                                        "parentId":"70", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,7,2,0,0,0)),   "endDate": new Date(Date.UTC(2013,5,13,11,0,0,0))},
-			    {"id": "75", "title": "Establish accounts",                                                   "parentId":"74", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,7,2,0,0,0)),   "endDate": new Date(Date.UTC(2013,5,10,11,0,0,0)), "connectId": "77", "connectorType": "StartStart"},
-			    {"id": "76", "title": "Establish line of credit",                                             "parentId":"74", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,13,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,5,13,11,0,0,0)), "connectId": "77", "connectorType": "StartStart"},
-			    {"id": "77", "title": "Choose legal representation",                                          "parentId":"70", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,13,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,5,13,11,0,0,0)), "connectId": "78", "connectorType": "FinishStart"},
-			    {"id": "78", "title": "Select business tax-basis category",                                   "parentId":"70", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,14,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,5,15,11,0,0,0)), "connectId": "79", "connectorType": "FinishStart"},
-			    {"id": "79", "title": "Choose capital funding source",                                        "parentId":"70", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,16,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,5,17,11,0,0,0)), "connectId": "98", "connectorType": "FinishStart"},
-			    {"id": "80", "title": "Commit capital funding",                                               "parentId":"70", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,17,11,0,0,0)), "endDate": new Date(Date.UTC(2013,5,17,11,0,0,0)), "connectId": "82", "connectorType": "FinishStart"},
-			    {"id": "81", "title": "Establish the Operating Control Base",                                 "parentId":"70", "progress": "19%",  "startDate": new Date(Date.UTC(2013,5,19,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,6,11,9,0,0,0))},
-			    {"id": "82", "title": "Choose and set up the accounting system",                              "parentId":"81", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,20,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,5,21,11,0,0,0)), "connectId": "83", "connectorType": "FinishStart"},
-			    {"id": "83", "title": "Obtain required licenses and permits",                                 "parentId":"81", "progress": "38%",  "startDate": new Date(Date.UTC(2013,5,21,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,6,1,9,0,0,0)),   "connectId": "84", "connectorType": "FinishStart"},
-			    {"id": "84", "title": "Obtain needed insurance",                                              "parentId":"81", "progress": "0%",   "startDate": new Date(Date.UTC(2013,6,4,2,0,0,0)),   "endDate": new Date(Date.UTC(2013,6,7,11,0,0,0)),  "connectId": "85", "connectorType": "FinishStart"},
-			    {"id": "85", "title": "Establish security plan",                                              "parentId":"81", "progress": "0%",   "startDate": new Date(Date.UTC(2013,6,8,2,0,0,0)),   "endDate": new Date(Date.UTC(2013,6,11,11,0,0,0)), "connectId": "91", "connectorType": "FinishStart"},
-			    {"id": "86", "title": "Develop Marketing Program",                                            "parentId":"70", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,6,2,0,0,0)),   "endDate": new Date(Date.UTC(2013,5,9,11,0,0,0))},
-			    {"id": "87", "title": "Establish an advertising program",                                     "parentId":"86", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,6,2,0,0,0)),   "endDate": new Date(Date.UTC(2013,5,7,11,0,0,0)),  "connectId": "88", "connectorType": "FinishStart"},
-			    {"id": "88", "title": "Develop a logo",                                                       "parentId":"86", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,8,2,0,0,0)),   "endDate": new Date(Date.UTC(2013,5,8,11,0,0,0)),  "connectId": "89", "connectorType": "FinishStart"},
-			    {"id": "89", "title": "Order promotional materials",                                          "parentId":"86", "progress": "0%",   "startDate": new Date(Date.UTC(2013,5,9,2,0,0,0)),   "endDate": new Date(Date.UTC(2013,5,9,11,0,0,0)),  "connectId": "91", "connectorType": "FinishStart"},
-			    {"id": "90", "title": "Provide Physical Facilities",                                          "parentId":"68", "progress": "16%",  "startDate": new Date(Date.UTC(2013,6,11,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,7,24,9,0,0,0))},
-			    {"id": "91", "title": "Secure operation space",                                               "parentId":"90", "progress": "0%",   "startDate": new Date(Date.UTC(2013,6,12,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,6,18,11,0,0,0)), "connectId": "92", "connectorType": "FinishStart"},
-			    {"id": "92", "title": "Select computer network hardware",                                     "parentId":"90", "progress": "100%", "startDate": new Date(Date.UTC(2013,6,19,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,6,19,11,0,0,0)), "connectId": "93", "connectorType": "FinishStart"},
-			    {"id": "93", "title": "Select computer software",                                             "parentId":"90", "progress": "0%",   "startDate": new Date(Date.UTC(2013,6,20,2,0,0,0)),  "endDate": new Date(Date.UTC(2013,6,20,11,0,0,0)), "connectId": "94", "connectorType": "FinishStart"},
-			    {"id": "94", "title": "Establish utilities",                                                  "parentId":"90", "progress": "67%",  "startDate": new Date(Date.UTC(2013,6,21,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,6,26,9,0,0,0)),  "connectId": "95", "connectorType": "FinishStart"},
-			    {"id": "95",  "title": "Provide furniture and equipment",                                     "parentId":"90", "progress": "15%",  "startDate": new Date(Date.UTC(2013,6,26,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,7,1,9,0,0,0)),   "connectId": "96", "connectorType": "FinishStart"},
-			    {"id": "96",  "title": "Move in",                                                             "parentId":"90", "progress": "13%",  "startDate": new Date(Date.UTC(2013,7,23,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,7,24,9,0,0,0))},
-			    {"id": "97",  "title": "Provide Staffing",                                                    "parentId":"68", "progress": "30%",  "startDate": new Date(Date.UTC(2013,5,19,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,7,23,9,0,0,0))},
-			    {"id": "98",  "title": "Interview and test candidates",                                       "parentId":"97", "progress": "43%",  "startDate": new Date(Date.UTC(2013,5,19,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,6,7,9,0,0,0)),   "connectId": "99", "connectorType": "FinishStart"},
-			    {"id": "99",  "title": "Hire staff",                                                          "parentId":"97", "progress": "10%",  "startDate": new Date(Date.UTC(2013,6,7,9,0,0,0)),   "endDate": new Date(Date.UTC(2013,6,21,9,0,0,0)),  "connectId": "100", "connectorType": "FinishStart"},
-			    {"id": "100", "title": "Train staff",                                                         "parentId":"97", "progress": "31%",  "startDate": new Date(Date.UTC(2013,7,1,9,0,0,0)),   "endDate": new Date(Date.UTC(2013,7,23,9,0,0,0))},
-			    {"id": "101", "title": "Mau & Ago business",                                                  "parentId":"97", "progress": "40%",  "startDate": new Date(Date.UTC(2013,1,24,9,0,0,0)),  "endDate": new Date(Date.UTC(2013,2,2,9,0,0,0))}
-			  ]
-        });
+		$.ajax({
+			method: "GET",
+			url: "./jedoData.json",
+			dataType: "json"})
+		.done(function(data) {
+			//console.log("s -- done.jedoData.json ");
+
+			var startGanttDate = null;
+			var endGanttDate = null;
+			var ganttDatas = data.map(function(d,i){
+				d.startDate = new Date(Date.UTC.apply(null, d.startDate));
+				d.endDate = new Date(Date.UTC.apply(null, d.endDate));
+				//console.log("s["+d.startDate.toISOString()+"] e["+d.endDate.toISOString()+"]");
+				if(startGanttDate == null) {
+					startGanttDate = d.startDate;
+				} else {
+					if(d.startDate.getTime() < startGanttDate.getTime()) {
+						startGanttDate = d.startDate;
+					}
+				}
+				if(endGanttDate == null) {
+					endGanttDate = d.endDate;
+				} else {
+					if(endGanttDate.getTime() < d.endDate.getTime()) {
+						endGanttDate = d.endDate;
+					}
+				}
+				return d;
+			});
+			var nWTime = endGanttDate.getTime() - startGanttDate.getTime();
+			var nSTime = parseInt((nWTime/100)*5,10);
+			$("#myGanttContainer").jedoGantt({
+	        	startGanttDate : new Date(startGanttDate.getTime()-nSTime),
+	        	endGanttDate   : new Date(endGanttDate.getTime()+nSTime),
+	        	ganttData      : ganttDatas
+			});
+			//console.log("e -- done.jedoData.json ");
+		})
+		.fail(function(jqXHR, textStatus) {
+			console.log("s -- fail.jedoData.json ");
+			console.log("textStatus:"+textStatus );
+			console.log("e -- fail.jedoData.json ");
+		});
+
     });
 </script>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-

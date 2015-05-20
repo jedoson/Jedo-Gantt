@@ -16,9 +16,6 @@
 (function($){
 	$.fn.jedoGantt = function(options) {
 		
-		var startGanttDate = new Date();
-		var endGanttDate = new Date();
-		
 		var options = $.extend({},jedo.options,options);
 		
 		var oGanttContainer = $(this);

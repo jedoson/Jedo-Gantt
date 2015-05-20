@@ -11,37 +11,51 @@
     GNU General Public License for more details.
 
 */
-"use strict";
-if(typeof(Worker) === "undefined") {
-	throw new Error("javascript Worker need!");
-} 
+
 
 if(!jedo.hasOwnProperty("JedoGantt")) {
-	
+
+		
 jedo.JedoGantt = function (options, ganttContainer, svg) {
-	
+
 	Object.defineProperty(this, "options", {
 		enumerable: false,
 		configurable: false,
 		writable: false,
 		value: options
 	});
-	
+
 	Object.defineProperty(this, "ganttContainer", {
 		enumerable: false,
 		configurable: false,
 		writable: false,
 		value: ganttContainer
 	});
-	
+
 	Object.defineProperty(this, "svg", {
 		enumerable: false,
 		configurable: false,
 		writable: false,
 		value: svg
 	});
-	
+
 	// -------------------------------------------------------------------------------------//
+
+	Object.defineProperty(this, "ganttHeader", {
+		enumerable: false,
+		configurable: false,
+		writable: false,
+		value: new jedo.JedoGantt.GanttHeader(this)
+	});
+	
+	Object.defineProperty(this, "ganttBody", {
+		enumerable: false,
+		configurable: false,
+		writable: false,
+		value: new jedo.JedoGantt.GanttBody(this)
+	});
+	
+	
 	
 	Object.defineProperty(this, "settingConfig", {
 		enumerable: false,
@@ -49,10 +63,13 @@ jedo.JedoGantt = function (options, ganttContainer, svg) {
 		writable: false,
 		value: new jedo.JedoGantt.SettingConfig()
 	});
+
 	
 	
+	
+
 	// -------------------------------------------------------------------------------------//
-	
+
 	var _capturedGanttBar = null;
 	Object.defineProperty(this, "capturedGanttBar", {
 		get: function() {
@@ -64,23 +81,26 @@ jedo.JedoGantt = function (options, ganttContainer, svg) {
 		enumerable: false,
 		configurable: false
 	});
-	
+
 
 	Object.defineProperty(this, "clearCapturedGanttBar", {
 		get: function() {
 			return function() {
 				if(_capturedGanttBar) {
 					_capturedGanttBar.clearCapturedGanttBar();
-				} 
+				}
 				_capturedGanttBar = null;
 			};
 		},
 		enumerable: false,
 		configurable: false
 	});
-	
+
 	// -------------------------------------------------------------------------------------//
 };
+	
+	
+	
 Object.defineProperty(jedo.JedoGantt, "getGanttDataKeyString", {
 	get: function() {
 		return function(nViewMode, nSvgPrevWidth, nSvgWidth) {
@@ -147,17 +167,17 @@ Object.defineProperty(jedo.JedoGantt, "getChangeSvgWidth", {
 	get: function() {
 		return function(nToDateViewMode, settingConfig, options, svg) {
 			//console.log("s -- jedo.JedoGantt.prototype.getChangeSvgWidth -- ");
-			
+
 			var xWidth = svg.attr('width');
 			var xHeight = svg.attr('height');
-			
+
 			var oDate = new Date();
 			oDate.setTime(settingConfig.dateViewStart.getTime());
 			oDate.setMonth(0);
 			oDate.setDate(1);
 			oDate.setHours(0,0,0,0);
 			var iSPos = settingConfig.fnScale(oDate, jedo.DATE_SCALE_TYPE_START);
-			
+
 			var iWidth = 0;
 			var nWidth = xWidth;
 			switch (nToDateViewMode) {
@@ -275,23 +295,23 @@ Object.defineProperty(jedo.JedoGantt, "getDateViewMode", {
 			oDate.setDate(1);
 			oDate.setHours(0,0,0,0);
 			var iSPos = oFnScale(oDate);
-			
+
 			oDate.setHours(23,59,59,999);
 			var iWidth = oFnScale(oDate) - iSPos;
 			//console.debug("One Date["+jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
 			if(options.unitWidth <= iWidth) {
 				return jedo.VIEW_MODE.DATE;
 			}
-			
-			
+
+
 			oDate.setDate(7);
 			iWidth = oFnScale(oDate) - iSPos;
 			//console.debug("One Week["+jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
 			if(options.unitWidth <= iWidth) {
 				return jedo.VIEW_MODE.WEEK;
 			}
-			
-			
+
+
 			oDate.setMonth(oDate.getMonth()+1);
 			oDate.setDate(0);
 			iWidth = oFnScale(oDate) - iSPos;
@@ -299,7 +319,7 @@ Object.defineProperty(jedo.JedoGantt, "getDateViewMode", {
 			if(options.unitWidth <= iWidth) {
 				return jedo.VIEW_MODE.MONTH;
 			}
-			
+
 			oDate.setTime(options.startGanttDate.getTime());
 			oDate.setMonth(3);
 			oDate.setDate(0);
@@ -308,13 +328,13 @@ Object.defineProperty(jedo.JedoGantt, "getDateViewMode", {
 			if(options.unitWidth <= iWidth) {
 				return jedo.VIEW_MODE.QUARTER;
 			}
-			
+
 			oDate.setMonth(12, 0);
 			iWidth = oFnScale(oDate) - iSPos;
 			//console.debug("One Year["+jedo.getFomattedDate(oDate)+"] Width:"+iWidth);
 			if(options.unitWidth <= iWidth) {
 				return jedo.VIEW_MODE.YEAR;
-			} 
+			}
 
 			throw new Error("getDateViewMode dateViewMode Not define");
 			//console.log("e -- jedo.JedoGantt.getDateViewMode -- ");
@@ -327,7 +347,7 @@ Object.defineProperty(jedo.JedoGantt, "getSVGCursorPoint", {
 	get: function() {
 		return function(svg, clientX, clientY) {
 			var pt = svg.node().createSVGPoint();
-			pt.x = clientX; 
+			pt.x = clientX;
 			pt.y = clientY;
 		    var a = svg.node().getScreenCTM();
 		    var b = a.inverse();
@@ -342,9 +362,9 @@ Object.defineProperty(jedo.JedoGantt, "getMarkPoints", {
 		return function(iX, iY, iW, iH) {
 			var mH = (iH/5)*3;
 			var mT = iH/3;
-			return [ { "x": iX-mT,  "y": iY},  
+			return [ { "x": iX-mT,  "y": iY},
 		             { "x": iX+mT,  "y": iY},
-		             { "x": iX+mT,  "y": iY+mH}, 
+		             { "x": iX+mT,  "y": iY+mH},
 		             { "x": iX,  	"y": iY+iH},
 		             { "x": iX-mT,  "y": iY+mH}
 		           ];
@@ -377,4 +397,3 @@ Object.defineProperty(jedo.JedoGantt, "setMouseUpGanttHeader", {
 
 
 }//if(!jedo.hasOwnProperty("JedoGantt")) {
-

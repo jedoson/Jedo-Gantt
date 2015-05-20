@@ -11,7 +11,7 @@
     GNU General Public License for more details.
 
 */
-"use strict";
+
 if(!jedo.hasOwnProperty("svg")) {
 
 jedo.svg = {};
@@ -64,12 +64,12 @@ Object.defineProperty(jedo.svg, "getTimeFormat", {
  - svg   (SVGElement) svg 루트 객체.
 
 
- = (null)  
+ = (null)
 \*/
 Object.defineProperty(jedo.svg, "createGanttDef", {
 	get: function() {
 		return function(svg) {
-			
+
 			var defs = svg.append("defs");
 		    var headerGradient = defs.append("linearGradient")
 				 	.attr("id", "headerGradient")
@@ -86,7 +86,7 @@ Object.defineProperty(jedo.svg, "createGanttDef", {
 					.attr("offset", "100%")
 					.attr("stop-color", "#DCDCDC")
 					.attr("stop-opacity", 1);
-			
+
 		    var ganttBarGradient = defs.append("linearGradient")
 				 	.attr("id", "ganttBarGradient")
 				 	.attr("x1", "0%")
@@ -102,7 +102,7 @@ Object.defineProperty(jedo.svg, "createGanttDef", {
 					.attr("offset", "100%")
 					.attr("stop-color", "#2F4F4F")
 					.attr("stop-opacity", 1);
-		    
+
 		    var ganttMarkGradient = defs.append("linearGradient")
 				 	.attr("id", "ganttMarkGradient")
 				 	.attr("x1", "0%")
@@ -127,12 +127,12 @@ Object.defineProperty(jedo.svg, "createGanttDef", {
 Object.defineProperty(jedo.svg, "createGanttHeader", {
 	get: function() {
 		return function(svg, nSvgWidth, nSvgHeaderHeight) {
-			
+
 			var ganttHeader = svg.append('g').attr('class', 'ganttHeader');
 			ganttHeader.append('rect')
 						.attr('class', 'ganttHeaderBg')
-						.attr('x', 1)
-						.attr('y', 1)
+						.attr('x', 0)
+						.attr('y', 0)
 						.attr('width', nSvgWidth)
 						.attr('height', nSvgHeaderHeight)
 						.style({
@@ -148,32 +148,53 @@ Object.defineProperty(jedo.svg, "createGanttHeader", {
 });
 Object.defineProperty(jedo.svg, "createGanttHeaderBack", {
 	get: function() {
-		return function(svgGanttHeader, x, y, w, h) {
-			
-			svgGanttHeader.append('rect')
-						.attr('class', 'ganttHeaderBack')
-						.attr('x', x)
-						.attr('y', y)
-						.attr('width', w)
-						.attr('height', h)
-						.style({
-							'fill': 'black',
-						    'stroke': 'navy',
-						    'stroke-width': 0
+		return function(oGanttContainer, x, y, w, h) {
+
+			var deferred = $.Deferred();
+			try {
+				d3.xml("./themify-icons/back-right.svg", "image/svg+xml", function(error, documentFragment) {
+
+				    if (error) {
+						deferred.resolve({
+							result: "error",
+							message: error
 						});
-			var svgGanttHeaderBack = svgGanttHeader.select("rect.ganttHeaderBack");
-			var node = svgGanttHeaderBack.node();
-			node.addEventListener("mouseover", function(event){
-				d3.select(this).style({
-				    'stroke-width': 1
+					} else {
+						
+						var svgNode = documentFragment.getElementsByTagName("svg")[0];
+						svgNode.setAttribute("id", "svgBackRight");
+
+						oGanttContainer.append(svgNode);
+					    d3.select("#svgBackRight")
+							.attr('class', 'ganttHeaderBack')
+							.style({
+								'position': 'absolute',
+								'left': x+'px',
+								'top': y+'px',
+								'width': w+'px',
+								'height': h+'px'
+							});
+						svgNode.addEventListener("mouseover", function(event){
+							//console.log("s -- mouseover svgBackRight -- ");
+							d3.select("#svgBackRight").select("path").style('stroke-width', 2);
+							//console.log("e -- mouseover svgBackRight -- ");
+						},false);
+						svgNode.addEventListener("mouseout", function(event){
+							//console.log("s -- mouseout svgBackRight -- ");
+							d3.select("#svgBackRight").select("path").style('stroke-width', 1);
+							//console.log("e -- mouseout svgBackRight -- ");
+						},false);
+
+						deferred.resolve({
+							result: "ok",
+							node: svgNode
+						});
+					}
 				});
-			},false);
-			node.addEventListener("mouseout", function(event){
-				d3.select(this).style({
-				    'stroke-width': 0
-				});
-			},false);
-			return svgGanttHeaderBack;
+
+			} finally {
+				return deferred.promise();
+			}
 		};
 	},
 	enumerable: false,
@@ -182,7 +203,7 @@ Object.defineProperty(jedo.svg, "createGanttHeaderBack", {
 Object.defineProperty(jedo.svg, "createGanttHeaderDebug", {
 	get: function() {
 		return function(svgGanttHeader, x, y, w, h) {
-			
+
 			svgGanttHeader.append('rect')
 						.attr('class', 'ganttHeaderDebug')
 						.attr('x', x)
@@ -197,14 +218,10 @@ Object.defineProperty(jedo.svg, "createGanttHeaderDebug", {
 			var ganttHeaderDebug = svgGanttHeader.select("rect.ganttHeaderDebug");
 			var node = ganttHeaderDebug.node();
 			node.addEventListener("mouseover", function(event){
-				d3.select(this).style({
-				    'stroke-width': 1
-				});
+				d3.select(this).style('stroke-width', 1);
 			},false);
 			node.addEventListener("mouseout", function(event){
-				d3.select(this).style({
-				    'stroke-width': 0
-				});
+				d3.select(this).style('stroke-width', 0);
 			},false);
 			return ganttHeaderDebug;
 		};
@@ -215,7 +232,7 @@ Object.defineProperty(jedo.svg, "createGanttHeaderDebug", {
 Object.defineProperty(jedo.svg, "createRectHeaderLine", {
 	get: function() {
 		return function(svgGanttHeader, indexLine, lineMode, arr) {
-			
+
 			svgGanttHeader.selectAll('rect.rectheaderLine'+indexLine)
 				.data(arr)
 				.enter()
@@ -228,8 +245,8 @@ Object.defineProperty(jedo.svg, "createRectHeaderLine", {
 				.attr('width', function(d){ return d.width; })
 				.attr('height', function(d){ return d.height; })
 				.style({
-					fill : 'url(#headerGradient)', 
-					stroke : 'navy', 
+					fill : 'url(#headerGradient)',
+					stroke : 'navy',
 					'stroke-width' : 0
 				});
 		};
@@ -240,7 +257,7 @@ Object.defineProperty(jedo.svg, "createRectHeaderLine", {
 Object.defineProperty(jedo.svg, "createRectHeaderLineTransition", {
 	get: function() {
 		return function(svgGanttHeader, indexLine, lineMode, arr) {
-			
+
 			var count = 0;
 			var deferred = $.Deferred();
 			svgGanttHeader.selectAll('rect.rectheaderLine'+indexLine)
@@ -255,8 +272,8 @@ Object.defineProperty(jedo.svg, "createRectHeaderLineTransition", {
 				.attr('width', function(d){ return d.width; })
 				.attr('height', function(d){ return d.height; })
 				.style({
-					'fill' : 'url(#headerGradient)', 
-					'stroke' : 'navy', 
+					'fill' : 'url(#headerGradient)',
+					'stroke' : 'navy',
 					'stroke-width' : 0 })
 				.transition().duration(1000)
 				.attr('x',function(d){return d.x2; })
@@ -275,7 +292,7 @@ Object.defineProperty(jedo.svg, "createRectHeaderLineTransition", {
 Object.defineProperty(jedo.svg, "createTextHeaderLine", {
 	get: function() {
 		return function(svgGanttHeader, indexLine, lineMode, arr, options) {
-			
+
 			var format = jedo.svg.getTimeFormat(indexLine, lineMode);
 			svgGanttHeader.selectAll('text.textheaderLine'+indexLine)
 				.data(arr)
@@ -285,12 +302,12 @@ Object.defineProperty(jedo.svg, "createTextHeaderLine", {
 				.attr('id', function(d){ return d.itemId+"T"; })
 				.attr('ndx', function(d, i){ return i; })
 				.text(function(d){ return format(d.currentDate); })
-				.attr('x', function(d){ 
+				.attr('x', function(d){
 					var bbox = this.getBBox();
 					//console.log(bbox);
 					var t = (d.width-bbox.width)/2;
 					return d.x+t; })
-				.attr('y', function(d){ 
+				.attr('y', function(d){
 					var bbox = this.getBBox();
 					//console.log(bbox);
 					//console.log("d.y:"+d.y);
@@ -311,7 +328,7 @@ Object.defineProperty(jedo.svg, "createTextHeaderLine", {
 Object.defineProperty(jedo.svg, "createTextHeaderLineTransition", {
 	get: function() {
 		return function(svgGanttHeader, indexLine, lineMode, arr, options) {
-			
+
 			var count = 0;
 			var deferred = $.Deferred();
 			var format = jedo.svg.getTimeFormat(indexLine, lineMode);
@@ -324,13 +341,13 @@ Object.defineProperty(jedo.svg, "createTextHeaderLineTransition", {
 				.attr('ndx', function(d, i){ return i; })
 				.text(function(d){
 					return format(d.currentDate); })
-				.attr('x', function(d){ 
+				.attr('x', function(d){
 					return d.x; })
-				.attr('y', function(d){ 
+				.attr('y', function(d){
 					return d.y + (d.height - (d.height/3)); })
-				.attr('width', function(d){ 
+				.attr('width', function(d){
 					return d.width; })
-				.attr('height', function(d){ 
+				.attr('height', function(d){
 					return d.height; })
 				.style({
 					'fill' : 'red',
@@ -341,7 +358,7 @@ Object.defineProperty(jedo.svg, "createTextHeaderLineTransition", {
 					var bbox = this.getBBox();
 					var t = (d.w2-bbox.width)/2;
 					return d.x2+t; })
-				.attr('y', function(d){ 
+				.attr('y', function(d){
 					var bbox = this.getBBox();
 					return d.y2 + bbox.height + ((d.height-bbox.height)/3); })
 				.attr('width',function(d){
@@ -360,7 +377,7 @@ Object.defineProperty(jedo.svg, "createTextHeaderLineTransition", {
 Object.defineProperty(jedo.svg, "createGanttBody", {
 	get: function() {
 		return function(svg, nSvgHeaderHeight, nSvgWidth, nSvgBodyHeight) {
-			
+
 			var ganttBody = svg.append('g').attr('class', 'ganttBody');
 			ganttBody.append('rect')
 				.attr('class', 'ganttBodyBg')
@@ -379,25 +396,21 @@ Object.defineProperty(jedo.svg, "createGanttBody", {
 	enumerable: false,
 	configurable: false
 });
-Object.defineProperty(jedo.svg, "setGanttBodyLine", {
+Object.defineProperty(jedo.svg, "createGanttBodyLine", {
 	get: function() {
-		return function(svgGanttBody, fnPrevScale, arr, iX) {
-			
-			if(fnPrevScale) {
-				svgGanttBody.selectAll('rect.ganttBodyLine').attr('width', iX);
-			} else {
-				svgGanttBody.selectAll('rect.ganttBodyLine')
-					.data(arr)
-					.enter()
-					.append('rect')
-					.attr('class', 'ganttBodyLine')
-					.attr('x', 0)
-					.attr('y', function(d){ return d.lineY; })
-					.attr('width', iX)
-					.attr('height', function(d){ return d.lineHeight; })
-					.style('fill', function(d, i){ return i%2 ? '#FFFFF0' : '#F0FFF0'; })
-					.style('opacity', 0.7);
-			}
+		return function(svgGanttBody, datas, iX) {
+
+			svgGanttBody.selectAll('rect.ganttBodyLine')
+				.data(datas)
+				.enter()
+				.append('rect')
+				.attr('class', 'ganttBodyLine')
+				.attr('x', 0)
+				.attr('y', function(d){ return d.lineY; })
+				.attr('width', iX)
+				.attr('height', function(d){ return d.lineHeight; })
+				.style('fill', function(d, i){ return i%2 ? '#FFFFF0' : '#F0FFF0'; });
+				//.style('opacity', 0.7);
 		};
 	},
 	enumerable: false,
@@ -406,7 +419,7 @@ Object.defineProperty(jedo.svg, "setGanttBodyLine", {
 Object.defineProperty(jedo.svg, "createGanttBodyBar", {
 	get: function() {
 		return function(svgGanttBody, arr) {
-			
+
 			return svgGanttBody.selectAll('g.ganttBar')
 								.data(arr)
 								.enter()
@@ -426,21 +439,22 @@ Object.defineProperty(jedo.svg, "createGanttBodyBar", {
 Object.defineProperty(jedo.svg, "createGanttMainBar", {
 	get: function() {
 		return function(svgGanttBodyBar) {
-			
-			svgGanttBodyBar.append("rect").attr('class', 'rectGanttBar')
+
+			svgGanttBodyBar.append("rect")
+					.attr('class', 'rectGanttBar')
 					.attr('id', function(d){ return "rectGanttBar_"+d.id})
 					.attr('x', function(d){ return d.x1; })
 					.attr('y', function(d){ return d.y1; })
 					.attr('width', function(d){ return d.w1; })
-					.attr('height', function(d){ 
+					.attr('height', function(d){
 						if(d.isParent) {
 							return (d.h1/3)*2;
 						} else {
 							return d.h1;
 						}
 					}).style({
-						'fill': 'url(#ganttBarGradient)', 
-						'stroke': '#ff69b4', 
+						'fill': 'url(#ganttBarGradient)',
+						'stroke': '#ff69b4',
 						'stroke-width': 0
 					})
 					.attr('dataID', function(d){ return d.id; })
@@ -453,17 +467,17 @@ Object.defineProperty(jedo.svg, "createGanttMainBar", {
 Object.defineProperty(jedo.svg, "createGanttStartMark", {
 	get: function() {
 		return function(svgGanttBody, id, x, y, w, h) {
-			
+
 			var polyData = jedo.JedoGantt.getMarkPoints(x, y, w, h);
 			svgGanttBody.select("#gGanttBar_"+id).append("polygon")
 					.attr("id", "startMarkGanttBar_"+id)
 					.attr("class", "startMarkGanttBar")
-			    	.attr("points",function(d) { 
-			    		return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" "); 
+			    	.attr("points",function(d) {
+			    		return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" ");
 			    	})
 					.style({
-						'fill': 'url(#ganttMarkGradient)', 
-						'stroke': '#000000', 
+						'fill': 'url(#ganttMarkGradient)',
+						'stroke': '#000000',
 						'stroke-width': 1
 					})
 					.attr('dataID', function(d){ return d.id; })
@@ -476,17 +490,17 @@ Object.defineProperty(jedo.svg, "createGanttStartMark", {
 Object.defineProperty(jedo.svg, "createGanttEndMark", {
 	get: function() {
 		return function(svgGanttBody, id, x, y, w, h) {
-			
+
 			var polyData = jedo.JedoGantt.getMarkPoints(x, y, w, h);
 			svgGanttBody.select("#gGanttBar_"+id).append("polygon")
 					.attr("id", "endMarkGanttBar_"+id)
 					.attr("class", "endMarkGanttBar")
-					.attr("points",function(d) { 
-						return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" "); 
+					.attr("points",function(d) {
+						return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" ");
 					})
 					.style({
-						'fill': 'url(#ganttMarkGradient)', 
-						'stroke': '#000000', 
+						'fill': 'url(#ganttMarkGradient)',
+						'stroke': '#000000',
 						'stroke-width': 1
 					})
 					.attr('dataID', function(d){ return d.id; })
@@ -499,10 +513,10 @@ Object.defineProperty(jedo.svg, "createGanttEndMark", {
 Object.defineProperty(jedo.svg, "changeGanttBodyBar", {
 	get: function() {
 		return function(svgGanttBody, arr) {
-			
+
 			var count = 0;
 			var deferred = $.Deferred();
-			
+
 			try {
 				arr.forEach(function(o,i){
 					svgGanttBody.selectAll("#rectGanttBar_"+o.id+", #startMarkGanttBar_"+o.id+", #endMarkGanttBar_"+o.id)
@@ -522,14 +536,14 @@ Object.defineProperty(jedo.svg, "changeGanttBodyBar", {
 						.attr('points',function(d){
 							var oThis = d3.select(this);
 							if(oThis.attr("id") == "startMarkGanttBar_"+o.id) {
-								
+
 								var polyData = jedo.JedoGantt.getMarkPoints(o.x2, o.y1, o.w2, o.h1);
-								return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" "); 
+								return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" ");
 							} else if(oThis.attr("id") == "endMarkGanttBar_"+o.id) {
-								
+
 								var polyData = jedo.JedoGantt.getMarkPoints(o.x2+o.w2, o.y1, o.w2, o.h1);
-								return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" "); 
-							} 
+								return polyData.map(function(d){ return [d.x,d.y].join(",");}).join(" ");
+							}
 							return null;
 						})
 						.each("end",function(){
@@ -538,7 +552,7 @@ Object.defineProperty(jedo.svg, "changeGanttBodyBar", {
 							}
 						});
 				});
-				
+
 			} finally {
 				return deferred.promise();
 			}
@@ -549,30 +563,33 @@ Object.defineProperty(jedo.svg, "changeGanttBodyBar", {
 });
 Object.defineProperty(jedo.svg, "setGanttBodyBar", {
 	get: function() {
-		return function(svgGanttBody, fnPrevScale, arr, iX, oJedoGantt) {
-			
+		return function(svgGanttBody, fnPrevScale, arr, iX) {
+
 			var count = 0;
 			var deferred = $.Deferred();
-			if(fnPrevScale) {
-				var promise = jedo.svg.changeGanttBodyBar(svgGanttBody, arr);
-				$.when(promise).done(function(result){
-					deferred.resolve(result);
-				});
-			} else {
-				var svgGanttBodyBar = jedo.svg.createGanttBodyBar(svgGanttBody, arr);
-				jedo.svg.createGanttMainBar(svgGanttBodyBar);
-				svgGanttBodyBar.each(function(d,i){
-					//console.log("d.id:"+d.id+" d.isParent:"+d.isParent);
-					if(d.isParent) {
-						// start Group Mark.
-						jedo.svg.createGanttStartMark(svgGanttBody, d.id, d.x1, d.y1, d.w1, d.h1);
-						// end group Mark.
-						jedo.svg.createGanttEndMark(svgGanttBody, d.id, d.x1+d.w1, d.y1, d.w1, d.h1);
-					}
-				});
-				deferred.resolve();
+			try {
+				if(fnPrevScale) {
+					var promise = jedo.svg.changeGanttBodyBar(svgGanttBody, arr);
+					$.when(promise).done(function(result){
+						deferred.resolve(result);
+					});
+				} else {
+					var svgGanttBodyBar = jedo.svg.createGanttBodyBar(svgGanttBody, arr);
+					jedo.svg.createGanttMainBar(svgGanttBodyBar);
+					svgGanttBodyBar.each(function(d,i){
+						//console.log("d.id:"+d.id+" d.isParent:"+d.isParent);
+						if(d.isParent) {
+							// start Group Mark.
+							jedo.svg.createGanttStartMark(svgGanttBody, d.id, d.x1, d.y1, d.w1, d.h1);
+							// end group Mark.
+							jedo.svg.createGanttEndMark(svgGanttBody, d.id, d.x1+d.w1, d.y1, d.w1, d.h1);
+						}
+					});
+					deferred.resolve();
+				}
+			} finally {
+				return deferred.promise();
 			}
-			return deferred.promise();
 		};
 	},
 	enumerable: false,
@@ -581,7 +598,7 @@ Object.defineProperty(jedo.svg, "setGanttBodyBar", {
 Object.defineProperty(jedo.svg, "appendGanttWidth", {
 	get: function() {
 		return function(svg, nAppendWidth) {
-			
+
 			var nSvgToWidth = parseInt(svg.attr("width"),10)+nAppendWidth;
 			svg.attr("width", nSvgToWidth);
 			svg.selectAll('rect.ganttHeaderBg, rect.ganttBodyBg, rect.ganttBodyLine').attr('width',nSvgToWidth);
@@ -594,7 +611,7 @@ Object.defineProperty(jedo.svg, "appendGanttWidth", {
 Object.defineProperty(jedo.svg, "insertGanttWidth", {
 	get: function() {
 		return function(svg, nInsertWidth) {
-			
+
 			var nSvgToWidth = parseInt(svg.attr("width"),10)+nInsertWidth;
 			svg.attr("width", nSvgToWidth);
 			svg.selectAll('rect.ganttHeaderBg, rect.ganttBodyBg, rect.ganttBodyLine').attr('width',nSvgToWidth);
@@ -635,7 +652,7 @@ Object.defineProperty(jedo.svg, "moveGanttObject", {
 });
 Object.defineProperty(jedo.svg, "appendHeaderLine", {
 	get: function() {
-		
+
 		return function(svgGanttHeader, options, headerDatas, indexLine, lineMode, nSvgWidth) {
 			svgGanttHeader.selectAll('rect.newrectheaderLine')
 			.data(headerDatas)
@@ -650,10 +667,10 @@ Object.defineProperty(jedo.svg, "appendHeaderLine", {
 			.attr('width', function(d){ return d.width; })
 			.attr('height', function(d){ return d.height; })
 			.style({
-				fill : 'url(#headerGradient)', //'#DA70D6', 
-				stroke : 'navy', 
+				fill : 'url(#headerGradient)', //'#DA70D6',
+				stroke : 'navy',
 				'stroke-width' : 0 });
-		
+
 		var format = jedo.svg.getTimeFormat(indexLine, lineMode);
 		svgGanttHeader.selectAll('text.newtextheaderLine')
 			.data(headerDatas)
@@ -663,12 +680,12 @@ Object.defineProperty(jedo.svg, "appendHeaderLine", {
 			.attr('id', function(d){ return d.itemId+"T"; })
 			.attr('ndx', function(d, i){ return i; })
 			.text(function(d){ return format(d.currentDate); })
-			.attr('x', function(d){ 
+			.attr('x', function(d){
 				var bbox = this.getBBox();
 				//console.log(bbox);
 				var t = (d.width-bbox.width)/2;
 				return nSvgWidth+d.x+t; })
-			.attr('y', function(d){ 
+			.attr('y', function(d){
 				var bbox = this.getBBox();
 				return d.y + bbox.height + ((d.height-bbox.height)/3); })
 			.attr('width', function(d){ return d.width; })
@@ -677,7 +694,7 @@ Object.defineProperty(jedo.svg, "appendHeaderLine", {
 				'fill': 'blue',
 				'font-family' : "Verdana",
 				'font-size' : options.header.fontSize });
-			
+
 		}
 	},
 	enumerable: false,
@@ -690,4 +707,3 @@ Object.defineProperty(jedo.svg, "appendHeaderLine", {
 
 
 }//if(!window.hasOwnProperty("jedo")) {
-

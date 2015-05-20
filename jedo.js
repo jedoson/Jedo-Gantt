@@ -139,7 +139,7 @@ Object.defineProperty(jedo, "gantt", {
  * jedo.getFnScale
  [ method ]
 
- * 시간시작일, 시간종요일, svg 폭과 을 기준으로 
+ * 시간시작일, 시간종요일, svg 폭과 을 기준으로
  * 화면상의 위치를 리턴 하는 함수를 리턴한다.
 
  > Arguments
@@ -149,7 +149,7 @@ Object.defineProperty(jedo, "gantt", {
  - nSpx   (number) SVG 화면 시작점.
  - nEpx   (number) SVG 화면 폭.
 
- = (function) function of returned 
+ = (function) function of returned
 \*/
 Object.defineProperty(jedo, "getFnScale", {
 	get: function() {
@@ -183,7 +183,7 @@ Object.defineProperty(jedo, "getFnScale", {
  - nSpx   (number) SVG 화면 시작점.
  - nEpx   (number) SVG 화면 폭.
 
- = (function) function of returned 
+ = (function) function of returned
 \*/
 Object.defineProperty(jedo, "getFnTime", {
 	get: function() {
@@ -236,10 +236,9 @@ Object.defineProperty(jedo, "setNextDate", {
 			if(lineMode === jedo.VIEW_MODE.YEAR) {
 				oDate.setMonth(12);
 				oDate.setDate(0);
-				oDate.setHours(23);
-				oDate.setMinutes(59,59,999);
+				oDate.setHours(23,59,59,999);
 			} else if(lineMode === jedo.VIEW_MODE.QUARTER) {
-				var nQuarter = jedo.getQuarter(oDate);
+				var nQuarter = parseInt(oDate.getMonth()/3)+1; //jedo.getQuarter(oDate);
 				oDate.setMonth(nQuarter*3);
 				oDate.setDate(0);
 				oDate.setHours(23,59,59,999);
@@ -269,18 +268,26 @@ Object.defineProperty(jedo, "setNextDate", {
 Object.defineProperty(jedo, "setEndDate", {
 	get: function() {
 		return function(oDate, lineMode) {
-			if(	lineMode === jedo.VIEW_MODE.YEAR 		|| 
-					lineMode === jedo.VIEW_MODE.QUARTER 	|| 
-					lineMode === jedo.VIEW_MODE.MONTH 		|| 
-					lineMode === jedo.VIEW_MODE.WEEK       ||
-					lineMode === jedo.VIEW_MODE.DATE		) {
-					
+			if(	lineMode === jedo.VIEW_MODE.YEAR 	||
+				lineMode === jedo.VIEW_MODE.QUARTER ||
+				lineMode === jedo.VIEW_MODE.MONTH 	||
+				lineMode === jedo.VIEW_MODE.WEEK    ||
+				lineMode === jedo.VIEW_MODE.DATE	) {
+
 					oDate.setDate(oDate.getDate()+1);
 			        oDate.setHours(0,0,0,1);
-			        
+
 				} else if(lineMode === jedo.VIEW_MODE.HOUR) {
-					
+
 					oDate.setHours(oDate.getHours()+1,0,0,1);
+
+				} else if(lineMode === jedo.VIEW_MODE.MIN) {
+
+					oDate.setMinutes(oDate.getMinutes()+1,0,1);
+
+				} else if(lineMode === jedo.VIEW_MODE.SEC) {
+
+					oDate.setSeconds(oDate.getSeconds()+1,599);
 
 				} else {
 					throw Error("lineMode is bad");
@@ -296,7 +303,7 @@ Object.defineProperty(jedo, "getHeaderItemID", {
 			if(lineMode === jedo.VIEW_MODE.YEAR) {
 				return sLineId+"_Y"+oDate.getFullYear();
 			} else if(lineMode === jedo.VIEW_MODE.QUARTER) {
-				var nQuarter = jedo.getQuarter(oDate);
+				var nQuarter = parseInt(oDate.getMonth()/3)+1;//jedo.getQuarter(oDate);
 				return sLineId+"_Y"+oDate.getFullYear()+"_Q"+nQuarter;
 			} else if(lineMode === jedo.VIEW_MODE.MONTH) {
 				return sLineId+"_Y"+oDate.getFullYear()+"_M"+oDate.getMonth();
@@ -326,7 +333,7 @@ Object.defineProperty(jedo, "getHeaderItemID", {
 Object.defineProperty(jedo, "nextHeaderItemID", {
 	get: function() {
 		return function(itemId) {
-			
+
 			var startWith = "";
 			var mark = "";
 			var no = -1;
@@ -340,25 +347,25 @@ Object.defineProperty(jedo, "nextHeaderItemID", {
 				}
 			}
 			console.log("startWith["+startWith+"] mark["+mark+"] no["+no+"]");
-			
-			
+
+
 			if(mark == "Q") {
-				
-				
-				
-				
+
+
+
+
 			} else if(mark == "M") {
-				
-				
-				
-				
+
+
+
+
 			} else if(mark == "W") {
-				
-				
-				
+
+
+
 			}
-			
-			
+
+
 		};
 	},
 	enumerable: false,
@@ -386,4 +393,3 @@ Object.defineProperty(jedo, "isInChildGantt", {
 
 
 }//if(!hasOwnProperty("jedo")) {
-

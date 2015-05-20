@@ -12,11 +12,6 @@
 
 */
 
-"use strict";
-if(typeof(Worker) === "undefined") {
-	throw new Error("javascript Worker need!");
-} 
-
 if(!jedo.JedoGantt.prototype.hasOwnProperty("initJedoGantt")) {
 
 /*\
@@ -30,28 +25,28 @@ if(!jedo.JedoGantt.prototype.hasOwnProperty("initJedoGantt")) {
  - nSvgWidth   (number) SVG 화면폭.
 
 
- = (function) function of returned 
+ = (function) function of returned
 \*/
 Object.defineProperty(jedo.JedoGantt.prototype, "initJedoGantt", {
 	get: function() {
-		
+
 		var _oJedoGantt = this;
 		var _svg = _oJedoGantt.svg;
 		var _options = _oJedoGantt.options;
 		var _settingConfig = _oJedoGantt.settingConfig;
 		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
-		
+
 		return function() {
 			//console.log("s -- jedo.JedoGantt.prototype.initJedoGantt -- ");
-			
+
 			jedo.svg.createGanttDef(_svg);
-			
+
 			var nSvgWidth = parseInt(_svg.attr('width'),10);
 			var nSvgHeight = parseInt(_svg.attr('height'),10);
-			
+
 			// ------------------------------------------------------------------------------------------- //
 			// jedo.gantt 설정.
-			
+
 			/**
 			 * 화면의폭.
 			 */
@@ -61,8 +56,8 @@ Object.defineProperty(jedo.JedoGantt.prototype, "initJedoGantt", {
 				writable: false,
 				value: nSvgWidth
 			});
-			
-			
+
+
 			/**
 			 * 화면의 최대폭.
 			 */
@@ -72,7 +67,7 @@ Object.defineProperty(jedo.JedoGantt.prototype, "initJedoGantt", {
 				writable: false,
 				value: nSvgWidth*15
 			});
-			
+
 			/**
 			 * 기간추가시 추가할 화면의 폭.
 			 */
@@ -82,35 +77,53 @@ Object.defineProperty(jedo.JedoGantt.prototype, "initJedoGantt", {
 				writable: false,
 				value: nSvgWidth*2
 			});
+
+			// ------------------------------------------------------------------------------------------- //
+			
+			
+			
+			
+			
+			
+			_oJedoGantt.ganttHeader.initGanttHeader();
+			_oJedoGantt.ganttBody.initGanttBody();
+			
+			
 			
 			// ------------------------------------------------------------------------------------------- //
+			
 
 		    var oFnScale = jedo.getFnScale(_options.startGanttDate, _options.endGanttDate, 0, nSvgWidth);
 		    var nDateViewMode = jedo.JedoGantt.getDateViewMode(_options, oFnScale);
 
 		    _settingConfig.setSettingGanttData(
 		    		new jedo.JedoGantt.SettingGanttData(
-		    				nDateViewMode, nSvgWidth, nSvgWidth, 
+		    				nDateViewMode, nSvgWidth, nSvgWidth,
 		    				new Date(_options.startGanttDate.getTime()),
 		    				new Date(_options.endGanttDate.getTime())
 		    			));
 		    _settingConfig.pushGanttWidth(nSvgWidth);
-		    
+
 		    var nSvgBodyHeight = _options.lineHeight*_options.ganttData.length;
 			var nSvgHeaderHeight = _options.header.lineHeight*_options.header.viewLineCount;
 
 			jedo.svg.createGanttBody(_svg, nSvgHeaderHeight, nSvgWidth, nSvgBodyHeight);
 			jedo.svg.createGanttHeader(_svg, nSvgWidth, nSvgHeaderHeight);
 
-			$.when(	_oJedoGantt.changeGanttBodyViewMode(), 
-					_oJedoGantt.changeGanttHeaderViewMode())
-					.done(function(){
+			$.when(	_oJedoGantt.ganttBody.changeGanttBodyViewMode(),
+					_oJedoGantt.ganttHeader.changeGanttHeaderViewMode())
+			.done(function(){
+
+				_oGanttContainer.on("scroll", _oJedoGantt.onScrollTimeFixedElement.bind(_oJedoGantt));
+				_oGanttContainer.on("scroll", _oJedoGantt.onScrollGanttContainer.bind(_oJedoGantt));
+				
+				_svg.selectAll('rect.ganttBodyLine').each(function(){
+					this.addEventListener("mousedown", _oJedoGantt.onMouseDownGanttLine.bind(_oJedoGantt), false);
+					this.addEventListener("mousemove", _oJedoGantt.onMouseMoveGanttLine.bind(_oJedoGantt), false);
+					this.addEventListener("mouseup", _oJedoGantt.onMouseUpGanttLine.bind(_oJedoGantt), false);
+				});
 						
-						_oGanttContainer.on("scroll", _oJedoGantt.onScrollTimeFixedElement.bind(_oJedoGantt));
-						_oGanttContainer.on("scroll", _oJedoGantt.onScrollGanttContainer.bind(_oJedoGantt));
-						_svg.node().addEventListener("mousemove",_oJedoGantt.onMouseMoveBar.bind(_oJedoGantt),false);
-						_svg.node().addEventListener("mouseup",  _oJedoGantt.onMouseUpBar.bind(_oJedoGantt),  false);
-					});
+			});
 			//console.log("e -- jedo.JedoGantt.prototype.initJedoGantt -- ");
 		};
 	},
@@ -119,17 +132,20 @@ Object.defineProperty(jedo.JedoGantt.prototype, "initJedoGantt", {
 });
 Object.defineProperty(jedo.JedoGantt.prototype, "changeGanttViewMode", {
 	get: function() {
-		
+
 		var _oJedoGantt = this;
 		var _svg = _oJedoGantt.svg;
 		var _options = _oJedoGantt.options;
 		var _settingConfig = _oJedoGantt.settingConfig;
-		
+
+
 		return function(svgPoint, nToDateViewMode, nSvgToWidth) {
-			//console.log("s -- jedo.JedoGantt.prototype.changeGanttViewMode -- ");
+			console.log("s -- jedo.JedoGantt.prototype.changeGanttViewMode -- ");
 			//console.log("nDateViewMode:"+jedo.JedoGantt.getViewModeString(nDateViewMode));
 			//console.log("now this.dateViewMode:"+this.dateViewMode);
-			
+
+			var currentSettingGanttData = _settingConfig.currentSettingGanttData;
+
 			var deferred = $.Deferred();
 			try {
 				if(jedo.VIEW_MODE.MIL < nToDateViewMode) {
@@ -139,29 +155,24 @@ Object.defineProperty(jedo.JedoGantt.prototype, "changeGanttViewMode", {
 					_svg.transition().duration(1000).delay(100).attr('width',nSvgToWidth);
 					_svg.selectAll('rect.ganttHeaderBg, rect.ganttBodyBg').attr('width',nSvgToWidth);
 					var nSvgWidth = _settingConfig.svgWidth;
-					var bDataViewMode = _settingConfig.isGanttData(nToDateViewMode, nSvgWidth, nSvgToWidth);
-					if(!bDataViewMode) {
 
-						
-						/*
-						 * 보여지진 시작 시간값과 마지막 시간값을 조정할 필요가 있을거 같다.
-						 */
-						_settingConfig.setSettingGanttData(
-								new jedo.JedoGantt.SettingGanttData(
-										nToDateViewMode, nSvgWidth, nSvgToWidth, 
-										new Date(_settingConfig.dateViewStart.getTime()),
-					    				new Date(_settingConfig.dateViewEnd.getTime())
-									));
-					} else {
+					if(_settingConfig.isGanttData(nToDateViewMode, nSvgWidth, nSvgToWidth)) {
+
 						_settingConfig.changePrevDateViewMode();
+					} else {
+						_settingConfig.setSettingGanttData(
+							new jedo.JedoGantt.SettingGanttData(
+									nToDateViewMode, nSvgWidth, nSvgToWidth,
+									new Date(_settingConfig.dateViewStart.getTime()),
+				    				new Date(_settingConfig.dateViewEnd.getTime())
+								));
 					}
-					$.when( _oJedoGantt.changeGanttBodyViewMode(), 
-							_oJedoGantt.changeGanttHeaderViewMode())
-							.done(function(){
+					$.when( _oJedoGantt.ganttBody.changeGanttBodyViewMode(),
+							_oJedoGantt.ganttHeader.changeGanttHeaderViewMode()).done(function(){
 						deferred.resolve();
 					});
 				}
-				//console.log("e -- jedo.JedoGantt.prototype.changeGanttViewMode -- ");
+				console.log("e -- jedo.JedoGantt.prototype.changeGanttViewMode -- ");
 			} finally {
 				return deferred.promise();
 			}
@@ -170,201 +181,35 @@ Object.defineProperty(jedo.JedoGantt.prototype, "changeGanttViewMode", {
 	enumerable: false,
 	configurable: false
 });
-Object.defineProperty(jedo.JedoGantt.prototype, "changeGanttHeaderViewMode", {
-	get: function() {
-		
-		var _oJedoGantt = this;
-		var _options = _oJedoGantt.options;
-		var _settingConfig = _oJedoGantt.settingConfig;
-		
-		var nHeaderLineCount = _options.header.viewLineCount;
-		
-		return function() {
-			//console.log("s -- jedo.JedoGantt.prototype.changeGanttHeaderViewMode -- ");
-			
-			var deferred = $.Deferred();
-			var _arrDeferred = [];
-			var _arrPromise = [];
-			var oJedoWorker = {};
-			
-			try {
-				var nDataViewMode = _oJedoGantt.settingConfig.dateViewMode;
-				
-				for(var i=0; i<nHeaderLineCount; i++) {
-					_arrDeferred[i] = $.Deferred();
-					var nLineMode = nDataViewMode-(nHeaderLineCount-(i+1));
-					//console.log("nLineMode:"+jedo.JedoGantt.getViewModeString(nLineMode));
-					var arr = _oJedoGantt.settingConfig.getGanttHeaderData(i, nLineMode);
-					if(arr == null) {
-						
-						oJedoWorker["jedoWorker"+i] = new Worker("jedo.JedoWorker.js");
-				    	oJedoWorker["jedoWorker"+i].postMessage({
-				    		"cmd": "SettingHeaderGanttData",
-				    		"options": _options,
-				    		"dateViewStart": _settingConfig.dateViewStart,
-							"dateViewEnd": _settingConfig.dateViewEnd,
-				    		"indexLine": i,
-				    		"lineMode": nLineMode,
-				    		"nPrevWidth": _settingConfig.svgPrevWidth,
-				    		"nToWidth": _settingConfig.svgWidth
-				    	});
-				    	oJedoWorker["jedoWorker"+i].addEventListener("message", function(event){
-				    		switch(event.data.cmd) {
-				    		case "SettingHeaderGanttData":
-				    			_oJedoGantt.settingConfig.setGanttHeaderData(event.data.indexLine, event.data.lineMode, event.data.ganttHeaderDatas);
-				    			var promise = _oJedoGantt.setHeaderLineMode(event.data.indexLine, event.data.lineMode, event.data.ganttHeaderDatas);
-				    			$.when(promise).done(function(){
-				    				_arrDeferred[event.data.indexLine].resolve();
-				    			});
-				    			break;
-				    		} 
-				    	}, false);
-					} else {
-						$.when(_oJedoGantt.setHeaderLineMode(i, nLineMode, arr)).done(function(idx){
-							_arrDeferred[idx].resolve();
-						});
-					}
-					_arrPromise[_arrPromise.length] = _arrDeferred[i].promise();
-				}
-				$.when.apply($, _arrPromise).done(function(){
-					_oJedoGantt.createGanttHeaderBack();
-					deferred.resolve();
-				});
-				
-				//console.log("e -- jedo.JedoGantt.prototype.changeGanttHeaderViewMode -- ");
-			} catch (e) {
-				
-				deferred.reject(e);
-				
-			} finally {
-				return deferred.promise();
-			}
-		};
-	},
-	enumerable: false,
-	configurable: false
-});
-Object.defineProperty(jedo.JedoGantt.prototype, "setHeaderLineMode", {
-	get: function() {
-		
-		var _oJedoGantt = this;
-		var _svg = _oJedoGantt.svg;
-		var _options = _oJedoGantt.options;
-		var _settingConfig = _oJedoGantt.settingConfig;
-		var _svgGanttHeader = _svg.select("g.ganttHeader");
-		var _viewLineCount = _options.header.viewLineCount;
-		
-		return function(indexLine, lineMode, arr) {
-			//console.log("s -- jedo.JedoGantt.prototype.setHeaderLineMode  --");
-			//console.log("indexLine:"+indexLine+" lineMode:"+jedo.JedoGantt.getViewModeString(lineMode));
-			//console.log("_options.header.viewLineCount["+_viewLineCount+"]");
-			
-			var deferred = $.Deferred();
-			try {
-				_svg.selectAll('rect.rectheaderLine'+indexLine+', '+'text.textheaderLine'+indexLine).remove();
-				
-				if(_settingConfig.fnPrevScale) {
-					$.when(	jedo.svg.createRectHeaderLineTransition(_svgGanttHeader, indexLine, lineMode, arr), 
-							jedo.svg.createTextHeaderLineTransition(_svgGanttHeader, indexLine, lineMode, arr, _options))
-							.done(function(){
-						deferred.resolve(indexLine);
-					});
-				} else {
-					jedo.svg.createRectHeaderLine(_svgGanttHeader, indexLine, lineMode, arr);
-					jedo.svg.createTextHeaderLine(_svgGanttHeader, indexLine, lineMode, arr, _options);
-					deferred.resolve(indexLine);
-				}
-				_svg.selectAll('rect.rectheaderLine'+indexLine+', text.textheaderLine'+indexLine)
-					.each(function(){
-						if(indexLine+1 === _viewLineCount) {
-							this.addEventListener("mouseup", function(event){
-								_oJedoGantt.onMouseUpGanttHeader.call(_oJedoGantt, event);
-							}, false);
-						} 
-						this.addEventListener("mouseover", function(event){
-							d3.select(this).style({'stroke-width':2});
-						},false);
-						this.addEventListener("mouseout", function(event){
-							d3.select(this).style({'stroke-width':0});
-						},false);
-					});
-				
-				//console.log("e -- jedo.JedoGantt.prototype.setHeaderLineMode  --");
-			} finally {
-				return deferred.promise();
-			}
-		};
-	},
-	enumerable: false,
-	configurable: false
-});
-Object.defineProperty(jedo.JedoGantt.prototype, "changeGanttBodyViewMode", {
-	get: function() {
-		
-		var _oJedoGantt = this;
-		var _options = _oJedoGantt.options;
-		var _settingConfig = _oJedoGantt.settingConfig;
-		
-		return function() {
-			//console.log("s -- jedo.JedoGantt.prototype.changeGanttBodyViewMode -- ");
-			//console.debug("nSvgToWidth:"+nSvgToWidth);
-			
-			var deferred = $.Deferred();
-			try {
-				if(!_settingConfig.ganttBodyData) {
-					var jedoWorker = new Worker("jedo.JedoWorker.js");
-					jedoWorker.postMessage({
-						"cmd": "SettingBodyGanttBarData",
-						"options": _options,
-						"dateViewStart": _settingConfig.dateViewStart,
-						"dateViewEnd": _settingConfig.dateViewEnd,
-						"nPrevWidth": _settingConfig.svgPrevWidth,
-						"nToWidth": _settingConfig.svgWidth
-					});
-					jedoWorker.addEventListener("message", function(event){
-						switch(event.data.cmd) {
-						case "SettingBodyGanttBarData":
-							//console.log("s -- message - jedoWorker.SettingBodyGanttBarData --- ");
-							var bodyBarDatas = event.data.ganttBodyBarDatas;
-							_settingConfig.ganttBodyData = bodyBarDatas;
-							$.when(_oJedoGantt.setBodyGanttBar(bodyBarDatas)).done(function(){
-								deferred.resolve();
-							});
-							//console.log("e -- message - jedoWorker.SettingBodyGanttBarData --- ");
-							break;
-						} 
-					}, false);
-				} else {
-					_oJedoGantt.setBodyGanttBar(_settingConfig.ganttBodyData);
-					deferred.resolve();
-				}
-				//console.log("e -- jedo.JedoGantt.prototype.changeGanttBodyViewMode -- ");
-			} finally {
-				return deferred.promise();
-			}
-		};
-	},
-	enumerable: false,
-	configurable: false
-});
+
 Object.defineProperty(jedo.JedoGantt.prototype, "createGanttHeaderBack", {
 	get: function() {
-		
+
 		var _oJedoGantt = this;
 		var _svg = _oJedoGantt.svg;
 		var _options = _oJedoGantt.options;
-		
+		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
+
 		return function() {
 			//console.log("s -- jedo.JedoGantt.prototype.createGanttHeaderBack -- ");
-			_svg.select("rect.ganttHeaderBack").remove();
 			var lH = _options.header.lineHeight;
 			var x = (lH/5);
 			var y = (lH/5);
 			var w = (lH/5)*3;
 			var h = (lH/5)*3;
-			jedo.svg.createGanttHeaderBack(_svg.select("g.ganttHeader"), x, y, w, h)
-				.node().addEventListener("mousedown", _oJedoGantt.onMouseDownChangePrevViewMode.bind(_oJedoGantt), false);
-				
+			if(d3.select("#svgBackRight").size() == 0) {
+				$.when(jedo.svg.createGanttHeaderBack(_oGanttContainer, x, y, w, h))
+					.done(function(oResolve){
+					//console.log("s -- svgRightBack - jedo.JedoGantt.prototype.createGanttHeaderBack");
+					if(oResolve.result == "error") {
+						alert(oResolve.message);
+					} else {
+						oResolve.node.addEventListener("mousedown", _oJedoGantt.onMouseDownChangePrevViewMode.bind(_oJedoGantt), false);
+					}
+					//console.log("e -- svgRightBack - jedo.JedoGantt.prototype.createGanttHeaderBack");
+				});
+			}
+			_svg.select("rect.ganttHeaderDebug").remove();
 			jedo.svg.createGanttHeaderDebug(_svg.select("g.ganttHeader"), x+w+w, y, w, h)
 				.node().addEventListener("mousedown", _oJedoGantt.onMouseDownHeaderDebug.bind(_oJedoGantt), false);
 			//console.log("e -- jedo.JedoGantt.prototype.createGanttHeaderBack -- ");
@@ -373,56 +218,12 @@ Object.defineProperty(jedo.JedoGantt.prototype, "createGanttHeaderBack", {
 	enumerable: false,
 	configurable: false
 });
-Object.defineProperty(jedo.JedoGantt.prototype, "setBodyGanttBar", {
-	get: function() {
-		
-		var _oJedoGantt = this;
-		var _svg = _oJedoGantt.svg;
-		var _options = _oJedoGantt.options;
-		var _settingConfig = _oJedoGantt.settingConfig;
-		var _svgGanttBody = _svg.select('g.ganttBody');
-		
-		return function(arr) {
-			//console.log("s -- jedo.JedoGantt.prototype.setBodyGanttBar  --");
-			
-			var deferred = $.Deferred();
-			try {
-				var iX = _settingConfig.fnScale(_options.endGanttDate, jedo.DATE_SCALE_TYPE_END);
-				jedo.svg.setGanttBodyLine(_svgGanttBody, _settingConfig.fnPrevScale, arr, iX);
-				$.when(jedo.svg.setGanttBodyBar(_svgGanttBody, _settingConfig.fnPrevScale, arr, iX, this)).done(function(){
-					deferred.resolve();
-				});
-				if(!_settingConfig.fnPrevScale) {
-					
-					_svgGanttBody.selectAll("rect.rectGanttBar, polygon.startMarkGanttBar, polygon.endMarkGanttBar")
-						.each(function(){
-							this.addEventListener("mouseover", _oJedoGantt.onMouseOverGanttBar.bind(_oJedoGantt), false);
-							this.addEventListener("mousedown", _oJedoGantt.onMouseDownGanttBar.bind(_oJedoGantt), false);
-						});
-					
-					_svg.selectAll('rect.ganttBodyLine').each(function(){
-						this.addEventListener("mousedown", _oJedoGantt.onMouseDownGanttLine.bind(_oJedoGantt), false);
-						this.addEventListener("mousemove", _oJedoGantt.onMouseMoveGanttLine.bind(_oJedoGantt), false);
-						this.addEventListener("mouseup", _oJedoGantt.onMouseUpGanttLine.bind(_oJedoGantt), false);
-					});
-				}
-				
-				//console.log("e -- jedo.JedoGantt.prototype.setBodyGanttBar  --");
-			} finally {
-				return deferred.promise();
-			}
-			
-			
-		};
-	},
-	enumerable: false,
-	configurable: false
-});
+
 /*\
  * jedo.JedoGantt.prototype.changeScrollGanttContainer
  [ method ]
 
- * 화면모드가 변경시 화면폭이 변경된다, 
+ * 화면모드가 변경시 화면폭이 변경된다,
  * 화면폭변경 이벤트를 주어 사용자가 클릭한 시점의 시간위치값과 화면이 변경된 후의 시간위치값이 같게한다.
 
  > Arguments
@@ -432,20 +233,20 @@ Object.defineProperty(jedo.JedoGantt.prototype, "setBodyGanttBar", {
  - nClientX      (number) 클릭시 보여지는 시간위치의 펙셀위치값.(X스크롤값 제외).
 
 
- = (function) function of returned 
+ = (function) function of returned
 \*/
 Object.defineProperty(jedo.JedoGantt.prototype, "changeScrollGanttContainer", {
 	get: function() {
-		
+
 		var _oJedoGantt = this;
 		var _svg = _oJedoGantt.svg;
 		var _options = _oJedoGantt.options;
 		var _settingConfig = _oJedoGantt.settingConfig;
 		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
-		
+
 		return function (nSvgToWidth, oClickDate, nClientX) {
 			//console.log("s -- jedo.JedoGantt.prototype.changeScrollGanttContainer  --");
-			
+
 			var nSTime = _settingConfig.dateViewStart.getTime();
 			var nETime = _settingConfig.dateViewEnd.getTime();
 			var nVTime = nETime - nSTime;
@@ -456,22 +257,22 @@ Object.defineProperty(jedo.JedoGantt.prototype, "changeScrollGanttContainer", {
 			//console.log("dateViewEnd["+_settingConfig.dateViewEnd.toISOString()+"] ");
 
 			var nTime = oClickDate.getTime()-nSTime;
-			
+
 			var observer = new MutationObserver(function(mutations) {
 				mutations.forEach(function(mutation) {
-					
+
 					var w = _svg.attr("width");
 					var nClickX = (w/nVTime)*nTime;
 					var nTScroll = nClickX - nClientX;
 					_oGanttContainer.scrollLeft(nTScroll);
-					
+
 					//console.log("nTScroll["+nTScroll+"] nClickX["+nClickX+"] w["+w+"] nVTime["+nVTime+"] nTime["+nTime+"]");
 					if((nSvgToWidth-5) < w) {
 						observer.disconnect();
 					}
 				});
 			});
-			observer.observe(_svg.node(), { 
+			observer.observe(_svg.node(), {
 				attributes: true,
 				attributeFilter: ["width"],
 				attributeOldValue: false,
@@ -483,298 +284,281 @@ Object.defineProperty(jedo.JedoGantt.prototype, "changeScrollGanttContainer", {
 	enumerable: false,
 	configurable: false
 });
-Object.defineProperty(jedo.JedoGantt.prototype, "appendLastViewDate", {
+
+	
+
+Object.defineProperty(jedo.JedoGantt.prototype, "onScrollTimeFixedElement", {
 	get: function() {
-		
+
 		var _oJedoGantt = this;
 		var _svg = _oJedoGantt.svg;
 		var _options = _oJedoGantt.options;
 		var _settingConfig = _oJedoGantt.settingConfig;
 		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
-		
-		var _svgGanttHeader = _svg.select("g.ganttHeader");
-		var nHeaderLineCount = _options.header.viewLineCount;
-		
-		return function() {
-			//console.log("s -- jedo.JedoGantt.prototype.appendLastViewDate -- ");
-			
-			var deferred = $.Deferred();
-			try {
-				//console.log("_settingConfig.dateViewStart["+_settingConfig.dateViewStart.toISOString()+"] _settingConfig.dateViewEnd["+_settingConfig.dateViewEnd.toISOString()+"]");
-				var nSTime = _settingConfig.dateViewStart.getTime();
-				var nETime = _settingConfig.dateViewEnd.getTime();
-				var nWTime = _settingConfig.fnTime(jedo.gantt.APPEND_VIEW_WIDTH).getTime() - nSTime;
-				var dateViewStart = new Date(nETime);
-				dateViewStart.setSeconds(dateViewStart.getSeconds()+1, 0);
-				var dateViewEnd = new Date(nETime+nWTime);
-				
-				var nSvgToWidth = jedo.svg.appendGanttWidth(_svg, jedo.gantt.APPEND_VIEW_WIDTH);
-				
-				var _arrDeferred = [];
-				var _arrPromise = [];
-				var oJedoWorker = {};
-				
-				var nSvgWidth = _settingConfig.svgWidth;
-				
-				var nDataViewMode = _settingConfig.dateViewMode;
-				for(var i=0; i<nHeaderLineCount; i++) {
-					
-					_arrDeferred[i] = $.Deferred();
-					
-					var nLineMode = nDataViewMode-(nHeaderLineCount-(i+1));
-					oJedoWorker["jedoWorker"+i] = new Worker("jedo.JedoWorker.js");
-			    	oJedoWorker["jedoWorker"+i].postMessage({
-			    		"cmd": "SettingAddHeaderGanttData",
-			    		"options": _options,
-			    		"dateViewStart": dateViewStart,
-						"dateViewEnd": dateViewEnd,
-			    		"indexLine": i,
-			    		"lineMode": nLineMode,
-			    		"nToWidth": jedo.gantt.APPEND_VIEW_WIDTH
-			    	});
-			    	oJedoWorker["jedoWorker"+i].addEventListener("message", function(event){
-			    		switch(event.data.cmd) {
-			    		case "SettingAddHeaderGanttData":
-			    		
-			    			var indexLine = event.data.indexLine;
-			    			var lineMode = event.data.lineMode;
-			    			var headerDatas = event.data.ganttHeaderDatas;
-			    			//console.log("s -- SettingAddHeaderGanttData indexLine["+indexLine+"] -- ");
-			    			
-			    			var itemId = headerDatas[0].itemId;
-			    			var svgRectHeader = _svgGanttHeader.select('#'+itemId);
-			    			var svgTextHeader = _svgGanttHeader.select('#'+itemId+"T");
-			    			//console.log("itemId["+itemId+"] svgRectHeader.size():"+svgRectHeader.size());
-			    			if(0 < svgRectHeader.size()) {
-			    				var elm = headerDatas.shift();
-			    				
-			    				var x1 = parseInt(svgRectHeader.attr('x'),10);
-			    				var w1 = parseInt(svgRectHeader.attr('width'),10);
-			    				var x2 = nSvgWidth+parseInt(elm.x,10);
-			    				var w2 = parseInt(elm.width,10);
-			    				var w  = (x2+w2)-x1;
-			    				svgRectHeader.attr('width', w);
-			    				console.log("1  indexLine["+indexLine+"] w["+w+"]");
-			    				if(0 < svgTextHeader.size()) {
-				    				svgTextHeader.attr('width', w)
-				    					.attr('x', function(d){ 
-					    					var bbox = this.getBBox();
-					    					var t = (w-bbox.width)/2;
-					    					return x1+t; 
-				    					});
-				    			}
-			    			} else {
-			    				/*
-			    				var arrGanttHeaderData = _settingConfig.getGanttHeaderData(indexLine, lineMode);
-			    				var oHeaderData = arrGanttHeaderData[arrGanttHeaderData.length-1];
-			    				
-			    				svgRectHeader = _svgGanttHeader.select('#'+oHeaderData.itemId);
-			    				console.log(oHeaderData.itemId+" svgRectHeader.size():"+svgRectHeader.size());
-			    				var x1 = parseInt(svgRectHeader.attr('x'),10);
-			    				var w1 = parseInt(svgRectHeader.attr('width'),10);
-			    				var x2 = nSvgWidth+parseInt(headerDatas[0].x,10);
-			    				var w2 = parseInt(headerDatas[0].width,10);
-			    				var w  = x2 - x1 - 2;
-			    				svgRectHeader.attr('width', w);
-			    				console.log("2  indexLine["+indexLine+"] w["+w+"]");
-			    				*/
-			    			}
-			    			jedo.svg.appendHeaderLine(_svgGanttHeader, _options, headerDatas, indexLine, lineMode, nSvgWidth);
-			    			
-			    			_svgGanttHeader.selectAll(headerDatas.map(function(o){
-				    			return "#"+o.itemId+", #"+o.itemId+"T";
-				    		}).join(", ")).each(function(){
-								if(indexLine+1 === nHeaderLineCount) {
-									this.addEventListener("mouseup", function(event){
-										_oJedoGantt.onMouseUpGanttHeader.call(_oJedoGantt, event);
-									}, false);
-								}
-								this.addEventListener("mouseover", function(){
-									d3.select(this).style({'stroke-width':2});
-								}, false);
-								this.addEventListener("mouseout", function(){
-									d3.select(this).style({'stroke-width':0});
-								}, false);
-							}).call(d3.behavior.drag() 
-             					.on('drag', function() { 
-             						d3.select(this).attr('x', d3.event.x)
-                                		.attr('y', d3.event.y); 
-                                }));
-			    			
-			    			_arrDeferred[indexLine].resolve();
-			    			
-			    			//console.log("e -- SettingAddHeaderGanttData indexLine["+indexLine+"] -- ");
-			    			break;
-			    		} 
-			    	}, false);
-			    	
-			    	_arrPromise[_arrPromise.length] = _arrDeferred[i].promise();
-			    	
-				} // for(var i=0; i<nHeaderLineCount; i++) {
-				
-				$.when.apply($, _arrPromise).done(function(){
-					_settingConfig.changeViewData(nSvgToWidth, new Date(_settingConfig.dateViewStart.getTime()), dateViewEnd);
-					deferred.resolve();
-					console.log("end -- jedo.JedoGantt.prototype.appendLastViewDate -- ");
-				});
-				
-				
-				console.log("e -- jedo.JedoGantt.prototype.appendLastViewDate -- ");
-			} finally {
-				return deferred.promise();
-			}
+
+		return function(event){
+			var nST = _oGanttContainer.scrollTop();
+			var nSL = _oGanttContainer.scrollLeft();
+			var sLeft = (parseInt(nSL,10)+10)+"px";
+			var nX = parseInt(nSL,10)+50;
+			_svg.select('g.ganttHeader').attr('transform', 'translate(0,'+nST+')');
+			d3.select('#svgBackRight').style('left', sLeft);
+			_svg.select('rect.ganttHeaderDebug').attr('x', nX);
 		}
 	},
 	enumerable: false,
 	configurable: false
 });
-Object.defineProperty(jedo.JedoGantt.prototype, "appendFirstViewDate", {
+Object.defineProperty(jedo.JedoGantt.prototype, "onScrollGanttContainer", {
 	get: function() {
-		
+
 		var _oJedoGantt = this;
 		var _svg = _oJedoGantt.svg;
 		var _options = _oJedoGantt.options;
 		var _settingConfig = _oJedoGantt.settingConfig;
 		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
-		
-		var _svgGanttHeader = _svg.select("g.ganttHeader");
-		var nHeaderLineCount = _options.header.viewLineCount;
-		
-		return function() {
-			console.log("s -- jedo.JedoGantt.prototype.appendFirstViewDate -- ");
-			
-			var deferred = $.Deferred();
-			try {
-				var nSTime = _settingConfig.dateViewStart.getTime();
-				var nETime = _settingConfig.dateViewEnd.getTime();
-				var nWTime = _settingConfig.fnTime(jedo.gantt.APPEND_VIEW_WIDTH).getTime() - nSTime;
-				var dateViewStart = new Date(nSTime-nWTime);
-				var dateViewEnd = new Date(nSTime);
-				dateViewEnd.setSeconds(dateViewEnd.getSeconds()-1, 0);
-				
-				var nSvgToWidth = jedo.svg.insertGanttWidth(_svg, jedo.gantt.APPEND_VIEW_WIDTH);
-				
-				_oGanttContainer.scrollLeft(jedo.gantt.APPEND_VIEW_WIDTH);
-				
-				var _arrDeferred = [];
-				var _arrPromise = [];
-				var oJedoWorker = {};
-				
-				var nSvgWidth = parseInt(_settingConfig.svgWidth,10);
-				//console.log("nSvgToWidth["+nSvgToWidth+"] nSvgWidth["+nSvgWidth+"]");
-				var nDataViewMode = _settingConfig.dateViewMode;
-				for(var i=0; i<nHeaderLineCount; i++) {
-					
-					_arrDeferred[i] = $.Deferred();
-					
-					var nLineMode = nDataViewMode-(nHeaderLineCount-(i+1));
-					oJedoWorker["jedoWorker"+i] = new Worker("jedo.JedoWorker.js");
-			    	oJedoWorker["jedoWorker"+i].postMessage({
-			    		"cmd": "SettingAddHeaderGanttData",
-			    		"options": _options,
-			    		"dateViewStart": dateViewStart,
-						"dateViewEnd": dateViewEnd,
-			    		"indexLine": i,
-			    		"lineMode": nLineMode,
-			    		"nToWidth": jedo.gantt.APPEND_VIEW_WIDTH
-			    	});
-			    	oJedoWorker["jedoWorker"+i].addEventListener("message", function(event){
-			    		switch(event.data.cmd) {
-			    		case "SettingAddHeaderGanttData":
-			    			//console.log("s -- jedo.JedoGantt.prototype.addViewDate - SettingAddHeaderGanttData -- ");
-			    			
-			    			var indexLine = event.data.indexLine;
-			    			var lineMode = event.data.lineMode;
-			    			var headerDatas = event.data.ganttHeaderDatas;
-			    			
-			    			var o = headerDatas[headerDatas.length-1];
-			    			var itemId = o.itemId;
-			    			var svgRectHeader = _svgGanttHeader.select('#'+itemId);
-			    			var svgTextHeader = _svgGanttHeader.select('#'+itemId+"T");
-			    			//console.log("itemId["+itemId+"] svgRectHeader.size():"+svgRectHeader.size());
-			    			
-			    			
-			    			if(0 < svgRectHeader.size()) {
-			    				var elm = headerDatas.pop();
-			    				//console.log("elm.itemId["+elm.itemId+"] elm.x["+elm.x+"]");
-			    				
-			    				var ndx = parseInt(svgRectHeader.attr('ndx'),10)+1;
-			    				var x1 = parseInt(svgRectHeader.attr('x'),10);
-			    				var w1 = parseInt(svgRectHeader.attr('width'),10);
-			    				var x2 = parseInt(elm.x,10);
-			    				var w2 = parseInt(elm.width,10);
-			    				var w  = w1+w2;
-			    				
-			    				svgRectHeader.attr('x', x2);
-			    				
-			    				var className = svgRectHeader.attr("class");
-			    				var nextSvgRectHeader = _svgGanttHeader.select("rect."+className+"[ndx='"+ndx+"']");
-			    				//console.log("nextSvgRectHeader.size()["+nextSvgRectHeader.size()+"] "+nextSvgRectHeader.attr("id"));
-			    				if(0 < nextSvgRectHeader.size()) {
-			    					var nx = nextSvgRectHeader.attr('x');
-			    					var nw = nx-x2-1;
-			    					svgRectHeader.attr('width', nw);
-			    				}
-			    				//console.log(" VIEW_WIDTH["+jedo.gantt.VIEW_WIDTH+"] ndx["+ndx+"] x["+x2+"] w["+w+"]");
-			    				if(0 < svgTextHeader.size()) {
-			    					
-			    					nw = svgRectHeader.attr('width');
-				    				svgTextHeader.attr('width', nw)
-				    					.attr('x', function(d){ 
-					    					var bbox = this.getBBox();
-					    					var t = (nw-bbox.width)/2;
-					    					return x1+t; 
-				    					});
-				    			}
-			    			}
-			    			
-			    			jedo.svg.appendHeaderLine(_svgGanttHeader, _options, headerDatas, indexLine, lineMode, 0);
-			    			
-			    			
-			    			_svgGanttHeader.selectAll(headerDatas.map(function(o){
-				    			return "#"+o.itemId+", #"+o.itemId+"T";
-				    		}).join(", ")).each(function(){
-								if(indexLine+1 === nHeaderLineCount) {
-									this.addEventListener("mouseup", function(event){
-										_oJedoGantt.onMouseUpGanttHeader.call(_oJedoGantt, event);
-									}, false);
-								}
-								this.addEventListener("mouseover", function(){
-									d3.select(this).style({'stroke-width':2});
-								}, false);
-								this.addEventListener("mouseout", function(){
-									d3.select(this).style({'stroke-width':0});
-								}, false);
+
+		var bFnWorking = false;
+		var promise = null;
+		return function(event){
+
+			if(promise == null) {
+				var nSvgWidth = parseInt(_svg.attr("width"),10);
+				if(nSvgWidth < (jedo.gantt.VIEW_WIDTH + 50)) return;
+
+				if(bFnWorking) return;
+				bFnWorking = true;
+				//console.log("s -- jedo.JedoGantt.prototype.onScrollGanttContainer scroll -- ");
+				try {
+					var nST = _oGanttContainer.scrollTop();
+					var nSL = _oGanttContainer.scrollLeft();
+
+					var dateScrollLeft = _settingConfig.fnTime(nSL);
+					//console.log("dateScrollLeft["+dateScrollLeft.toISOString()+"]");
+
+					_settingConfig.scrollLeft = nSL;
+					_settingConfig.viewStartDate = dateScrollLeft;
+
+					var nSumScroll = jedo.gantt.VIEW_WIDTH+nSL;
+					//console.log("nSumScroll["+nSumScroll+"] _settingConfig.svgWidth["+_settingConfig.svgWidth+"]");
+
+					// 사용자가 스크롤 하여 최우측으로 이동
+					if(nSvgWidth+10 < jedo.gantt.MAX_VIEW_WIDTH) {
+						/*
+						if(nSL === 0) {
+							_oGanttContainer.scrollLeft(jedo.gantt.APPEND_VIEW_WIDTH);
+							promise = _oJedoGantt.appendFirstViewDate();
+						} else if(_settingConfig.svgWidth < (nSumScroll+10)) {
+							promise = _oJedoGantt.appendLastViewDate();
+						}
+						*/
+						if(promise) {
+							$.when(promise).done(function(){
+								setTimeout(function(){
+									promise = null;
+									console.log("end -- jedo.JedoGantt.prototype.onScrollGanttContainer scroll -- ");
+								}, 1000);
 							});
-			    			
-			    			_arrDeferred[indexLine].resolve();
-			    			
-			    			//console.log("e -- jedo.JedoGantt.prototype.addViewDate - SettingAddHeaderGanttData -- ");
-			    			break;
-			    		} 
-			    	}, false);
-			    	
-			    	_arrPromise[_arrPromise.length] = _arrDeferred[i].promise();
-			    	
-				} // for(var i=0; i<nHeaderLineCount; i++) {
-				
-				$.when.apply($, _arrPromise).done(function(){
-					//console.log("s -- appendFirstViewDate _arrPromise -- ");
-					_settingConfig.changeViewData(nSvgToWidth, dateViewStart, new Date(_settingConfig.dateViewEnd.getTime()));
-					deferred.resolve();
-					//console.log("e -- appendFirstViewDate _arrPromise -- ");
-					console.log("e -- jedo.JedoGantt.prototype.appendFirstViewDate -- ");
-				});
-				//console.log("e -- jedo.JedoGantt.prototype.appendFirstViewDate -- ");
-			} finally {
-				return deferred.promise();
+						}
+					}
+				} finally {
+					bFnWorking = false;
+				}
+			} else {
+				event.stopPropagation();
+				event.preventDefault();
 			}
+			//console.log("e -- jedo.JedoGantt.prototype.onScrollGanttContainer scroll -- ");
+		}
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(jedo.JedoGantt.prototype, "onMouseDownChangePrevViewMode", {
+	get: function() {
+
+		var _oJedoGantt = this;
+		var _svg = _oJedoGantt.svg;
+		var _settingConfig = _oJedoGantt.settingConfig;
+		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
+
+		return function(event) {
+//			console.log("s -- jedo.JedoGantt.prototype.onMouseDownChangePrevViewMode  --");
+
+			var svgPoint = jedo.JedoGantt.getSVGCursorPoint(_svg, event.clientX, event.clientY);
+			var nSvgWidth = parseInt(_svg.attr("width"),10);
+			var nClickPer = (svgPoint.x*100)/nSvgWidth;
+
+			var nToDataViewMode = jedo.JedoGantt.getZoomOutViewMode(_settingConfig.dateViewMode);
+			var nSvgToWidth = _settingConfig.popGanttWidth();
+			var nPrevScrollLeft = _settingConfig.prevScrollLeft;
+			var oPrevViewStartDate = _settingConfig.prevViewStartDate;
+
+			//_oJedoGantt.changeScrollGanttContainer(nSvgToWidth, _settingConfig.clickPer, _settingConfig.viewX);
+			var observer = new MutationObserver(function(mutations) {
+				mutations.forEach(function(mutation) {
+					var w = parseInt(_svg.attr("width"),10);
+					var nToTimePx = (w*nClickPer)/100;
+					//var nTScroll = nToTimePx - nClientX;
+					//_oGanttContainer.scrollLeft(nTScroll);
+					if((nSvgToWidth-5) < w) {
+						observer.disconnect();
+						_oGanttContainer.scrollLeft(nPrevScrollLeft);
+					}
+				});
+			});
+			observer.observe(this.svg.node(), {
+			    attributes: true,
+			    attributeFilter: ["width"],
+			    attributeOldValue: false,
+			    childList: false
+			});
+			var promise = _oJedoGantt.changeGanttViewMode(svgPoint, nToDataViewMode, nSvgToWidth);
+
+//			console.log("e -- jedo.JedoGantt.prototype.onMouseDownChangePrevViewMode  --");
+		};
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(jedo.JedoGantt.prototype, "onMouseDownGanttLine", {
+	get: function() {
+
+		var _oJedoGantt = this;
+
+		return function(event) {
+			//console.log("s -- jedo.JedoGantt.prototype.onMouseDownGanttLine  --");
+
+			if(event.button == 0) {
+				_oJedoGantt.scrollSVG = {
+						clientX: event.clientX,
+						clientY: event.clientY
+				};
+			}
+
+			//console.log("e -- jedo.JedoGantt.prototype.onMouseDownGanttLine  --");
+		};
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(jedo.JedoGantt.prototype, "onMouseMoveGanttLine", {
+	get: function() {
+
+		var _oJedoGantt = this;
+		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
+
+		return function(event) {
+			//console.log("s -- jedo.JedoGantt.prototype.onMouseMoveGanttLine  --");
+			if(_oJedoGantt.scrollSVG) {
+				//console.log("event.button:"+event.button);
+
+				var scrollLeft = _oGanttContainer.scrollLeft();
+				_oGanttContainer.scrollLeft(scrollLeft+_oJedoGantt.scrollSVG.clientX - event.clientX);
+				var scrollTop = _oGanttContainer.scrollTop();
+				_oGanttContainer.scrollTop(scrollTop+_oJedoGantt.scrollSVG.clientY - event.clientY);
+
+				_oJedoGantt.scrollSVG.clientX = event.clientX;
+				_oJedoGantt.scrollSVG.clientY = event.clientY;
+			}
+			//console.log("e -- jedo.JedoGantt.prototype.onMouseMoveGanttLine  --");
+		};
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(jedo.JedoGantt.prototype, "onMouseUpGanttLine", {
+	get: function() {
+
+		var _oJedoGantt = this;
+
+		return function(event) {
+			//console.log("s -- jedo.JedoGantt.prototype.onMouseUpGanttLine  --");
+			if(event.button == 0) {
+				_oJedoGantt.scrollSVG = null;
+			}
+			//console.log("e -- jedo.JedoGantt.prototype.onMouseUpGanttLine  --");
+		};
+	},
+	enumerable: false,
+	configurable: false
+});
+
+Object.defineProperty(jedo.JedoGantt.prototype, "onMouseDownHeaderDebug", {
+	get: function() {
+
+		var _oJedoGantt = this;
+		var _svg = _oJedoGantt.svg;
+		var _settingConfig = _oJedoGantt.settingConfig;
+		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
+
+		return function(event) {
+
+			var svgElement = _svg.select(event.currentTarget);
+			if(svgElement) {
+				var observer = new MutationObserver(function(mutations) {
+				mutations.forEach(function(mutation) {
+
+					console.log("Headerline2_Y2014_W6 "+svgElement.attr("id")+" svgElement.width["+svgElement.attr("width")+"]");
+
+					});
+				});
+				observer.observe(svgElement.node(), {
+				    attributes: true,
+				    attributeFilter: ["width"],
+				    attributeOldValue: false,
+				    childList: false
+				});
+			}
+
+		}
+	},
+	enumerable: false,
+	configurable: false
+});
+Object.defineProperty(jedo.JedoGantt.prototype, "debugObject", {
+	get: function() {
+
+		var _oJedoGantt = this;
+		var _svg = _oJedoGantt.svg;
+		var _settingConfig = _oJedoGantt.settingConfig;
+		var _oGanttContainer = $(_oJedoGantt.ganttContainer);
+
+		return function(sSvgElementId) {
+
+			var svgElement = _svg.select("#"+sSvgElementId);
+			if(svgElement) {
+				var observer = new MutationObserver(function(mutations) {
+					mutations.forEach(function(mutation) {
+
+						console.log(svgElement.attr("id")+" svgElement.width["+svgElement.attr("width")+"]");
+
+					});
+				});
+				observer.observe(svgElement.node(), {
+				    attributes: true,
+				    attributeFilter: ["width"],
+				    attributeOldValue: false,
+				    childList: false
+				});
+			}
+
 		}
 	},
 	enumerable: false,
 	configurable: false
 });
 
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 }//if(!jedo.hasOwnProperty("JedoGantt")) {
-
